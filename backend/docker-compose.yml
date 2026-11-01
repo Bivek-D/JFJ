@@ -1,0 +1,22 @@
+# Local development only. Production uses Supabase (database) and Render (app, from the Dockerfile).
+# Usage (from backend/): docker compose up -d
+services:
+  jfj-db:
+    image: postgis/postgis:16-3.6
+    ports:
+      - "5433:5432" # localhost:5433 -> container's Postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - jfj-v1:/var/lib/postgresql/data
+    healthcheck:
+      # -h 127.0.0.1 checks over TCP, so first-start setup (socket-only) isn't reported as healthy
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  jfj-v1:
