@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.claude
+.plan
+plan/
+declaration.pdf
+.vibe-wise
+.env

@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  path-guard:
+    # Only fork PRs (the frontend developer) are restricted to frontend/.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Fail if files outside frontend/ changed
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          outside=$(git diff --name-only "origin/$BASE_REF...HEAD" | grep -v '^frontend/' || true)
+          if [ -n "$outside" ]; then
+            echo "Fork PRs may only change frontend/. Found:"
+            echo "$outside"
+            exit 1
+          fi
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Skip while frontend is empty
+        if: hashFiles('frontend/package.json') == ''
+        run: echo "No frontend/package.json yet, nothing to check."
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build and test
+        run: ./mvnw -B verify
+      - name: Build Docker image
+        run: docker build -t jfj-backend .
