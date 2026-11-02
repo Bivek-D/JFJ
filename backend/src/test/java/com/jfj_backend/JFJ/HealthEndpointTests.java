@@ -26,4 +26,12 @@ class HealthEndpointTests {
 				.andExpect(jsonPath("$.status").value("UP"))
 				.andExpect(jsonPath("$.components").doesNotExist()); // show-details: never
 	}
+
+	@Test
+	void infoShowsCommit() throws Exception {
+		// The deploy workflow polls this to tell the new version from the old one.
+		mockMvc.perform(get("/actuator/info"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.app.commit").value("local")); // RENDER_GIT_COMMIT is unset in tests
+	}
 }

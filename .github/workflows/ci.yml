@@ -53,3 +53,39 @@ jobs:
         run: ./mvnw -B verify
       - name: Build Docker image
         run: docker build -t jfj-backend .
+
+  deploy:
+    # Only after a merge to main, and only when the other CI jobs passed.
+    # path-guard is left out of needs: it only runs on PRs, and a skipped need would skip this job.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    environment: production        # waits for owner approval; unlocks the hook secret
+    concurrency:
+      group: production-deploy     # one deploy at a time, never two at once
+      cancel-in-progress: false
+    env:
+      APP_URL: https://jfj-s529.onrender.com
+      EXPECTED_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Trigger Render deploy of this exact commit
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        # The hook URL already contains ?key=..., so ref is appended with &.
+        run: curl -fsS -X POST "${DEPLOY_HOOK}&ref=${EXPECTED_COMMIT}" > /dev/null
+
+      - name: Wait for the new version, then check health
+        # /actuator/info reports RENDER_GIT_COMMIT, which tells the new version from the old one.
+        run: |
+          for i in $(seq 1 40); do    # 40 tries x 15 s = 10 minutes max
+            live=$(curl -fsS --max-time 60 "$APP_URL/actuator/info" | jq -r '.app.commit // empty' || true)
+            echo "Try $i: live commit is ${live:-unreachable}"
+            if [ "$live" = "$EXPECTED_COMMIT" ]; then
+              curl -fsS --max-time 60 "$APP_URL/actuator/health" | jq -e '.status == "UP"'
+              echo "Deployed $EXPECTED_COMMIT and healthy."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "New version did not go live within 10 minutes. The old version is still serving."
+          exit 1
