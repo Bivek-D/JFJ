@@ -1,0 +1,5 @@
+spring:
+  flyway:
+    url: ${FLYWAY_URL}
+    user: ${DB_USERNAME}
+    password: ${DB_PASSWORD}

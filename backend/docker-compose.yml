@@ -2,7 +2,7 @@
 # Usage (from backend/): docker compose up -d
 services:
   jfj-db:
-    image: postgis/postgis:16-3.6
+    image: postgis/postgis:17-3.4
     ports:
       - "5433:5432" # localhost:5433 -> container's Postgres
     environment:
