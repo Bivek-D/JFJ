@@ -15,6 +15,6 @@ class TestcontainersConfiguration {
 	PostgreSQLContainer postgres() {
 		// Same image as docker-compose. "Compatible substitute" tells Testcontainers it's still Postgres.
 		return new PostgreSQLContainer(
-				DockerImageName.parse("postgis/postgis:16-3.6").asCompatibleSubstituteFor("postgres"));
+				DockerImageName.parse("postgis/postgis:17-3.4").asCompatibleSubstituteFor("postgres"));
 	}
 }
