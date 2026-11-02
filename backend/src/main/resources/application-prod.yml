@@ -3,3 +3,6 @@ spring:
     url: ${FLYWAY_URL}
     user: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    # Render free has a slow CPU, so the first SSL connection can time out; retry instead of crashing.
+    connect-retries: 5
+    connect-retries-interval: 5s
