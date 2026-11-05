@@ -10,6 +10,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+# Access and refresh token settings (PRD 13.1). JWT_SECRET has no default here,
+# so production refuses to start without it. Dev and tests get a fallback in application-dev.yml.
+jwt:
+  secret: ${JWT_SECRET}
+  access-ttl: ${JWT_ACCESS_TTL_MIN:15}m
+  refresh-ttl: ${JWT_REFRESH_TTL_DAYS:7}d
 management:
   endpoints:
     web:
