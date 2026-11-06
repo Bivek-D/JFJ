@@ -10,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.jfj_backend.JFJ.dto.response.ErrorResponse;
 
@@ -35,6 +36,13 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
 		return build(HttpStatus.BAD_REQUEST, "Request body is missing or malformed", request, Map.of());
+	}
+
+	/** A path or query value of the wrong type, e.g. /workers/abc where a UUID is expected. */
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+			HttpServletRequest request) {
+		return build(HttpStatus.BAD_REQUEST, "Invalid value for '" + ex.getName() + "'", request, Map.of());
 	}
 
 	@ExceptionHandler(BadRequestException.class)
