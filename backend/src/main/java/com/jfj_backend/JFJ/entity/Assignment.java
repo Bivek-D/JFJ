@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.jfj_backend.JFJ.enums.AssignmentStatus;
+import com.jfj_backend.JFJ.exception.BadRequestException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,7 +22,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-/** One row of assignments (V5): a hired worker on a gig. Day 10 adds complete and remove. */
+/** One row of assignments (V5): a hired worker on a gig. */
 @Entity
 @Table(name = "assignments")
 public class Assignment {
@@ -66,6 +67,27 @@ public class Assignment {
 		this.application = application;
 		this.gig = application.getGig();
 		this.worker = application.getWorker();
+	}
+
+	/** ACTIVE -> COMPLETED when the gig is completed. */
+	public void complete(Instant now) {
+		requireActive();
+		this.status = AssignmentStatus.COMPLETED;
+		this.endedAt = now;
+	}
+
+	/** ACTIVE -> REMOVED, e.g. reason "gig cancelled". The worker loses contact access at once (APP-7). */
+	public void remove(String reason, Instant now) {
+		requireActive();
+		this.status = AssignmentStatus.REMOVED;
+		this.removedReason = reason;
+		this.endedAt = now;
+	}
+
+	private void requireActive() {
+		if (status != AssignmentStatus.ACTIVE) {
+			throw new BadRequestException("This assignment has already ended");
+		}
 	}
 
 	public UUID getId() {

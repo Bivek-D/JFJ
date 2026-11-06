@@ -22,6 +22,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
 	List<Application> findByGigIdAndStatusOrderByCreatedAtDesc(UUID gigId, ApplicationStatus status);
 
+	List<Application> findByGigIdAndStatusIn(UUID gigId, List<ApplicationStatus> statuses);
+
 	/** Only the gig id, without loading the application, so hiring can lock the gig FIRST (see ApplicationService.hire). */
 	@Query("select a.gig.id from Application a where a.id = :id")
 	Optional<UUID> findGigIdById(UUID id);
