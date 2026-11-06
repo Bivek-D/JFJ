@@ -19,12 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.jfj_backend.JFJ.config.OpenApiConfig;
+import com.jfj_backend.JFJ.dto.request.CancelGigRequest;
 import com.jfj_backend.JFJ.dto.request.GigRequest;
 import com.jfj_backend.JFJ.dto.response.GigDetailResponse;
 import com.jfj_backend.JFJ.dto.response.OwnerGigResponse;
 import com.jfj_backend.JFJ.dto.response.PageResponse;
 import com.jfj_backend.JFJ.enums.GigStatus;
 import com.jfj_backend.JFJ.security.ProviderOnly;
+import com.jfj_backend.JFJ.service.GigLifecycleService;
 import com.jfj_backend.JFJ.service.GigService;
 
 import jakarta.validation.Valid;
@@ -36,9 +38,11 @@ import jakarta.validation.Valid;
 public class GigController {
 
 	private final GigService gigService;
+	private final GigLifecycleService gigLifecycleService;
 
-	public GigController(GigService gigService) {
+	public GigController(GigService gigService, GigLifecycleService gigLifecycleService) {
 		this.gigService = gigService;
+		this.gigLifecycleService = gigLifecycleService;
 	}
 
 	@ProviderOnly
@@ -59,6 +63,28 @@ public class GigController {
 	@PostMapping("/{id}/publish")
 	public OwnerGigResponse publish(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		return gigService.publish(userId(jwt), id);
+	}
+
+	/** OPEN -> IN_PROGRESS; needs at least one hired worker. */
+	@ProviderOnly
+	@PostMapping("/{id}/start")
+	public OwnerGigResponse start(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+		return gigLifecycleService.start(userId(jwt), id);
+	}
+
+	/** IN_PROGRESS -> COMPLETED; hired workers' assignments complete, waiting applications are rejected. */
+	@ProviderOnly
+	@PostMapping("/{id}/complete")
+	public OwnerGigResponse complete(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+		return gigLifecycleService.complete(userId(jwt), id);
+	}
+
+	/** OPEN or IN_PROGRESS -> CANCELLED with {"reason": "..."}; hired workers are removed ("gig cancelled"). */
+	@ProviderOnly
+	@PostMapping("/{id}/cancel")
+	public OwnerGigResponse cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
+			@Valid @RequestBody CancelGigRequest request) {
+		return gigLifecycleService.cancel(userId(jwt), id, request.reason());
 	}
 
 	@ProviderOnly

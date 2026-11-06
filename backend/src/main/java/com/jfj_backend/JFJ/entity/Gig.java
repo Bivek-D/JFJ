@@ -107,6 +107,11 @@ public class Gig {
 	@Column(nullable = false, length = 12)
 	private GigStatus status = GigStatus.DRAFT;
 
+	@Column(length = 500)
+	private String cancelReason;
+
+	private Instant completedAt;
+
 	@ManyToMany
 	@JoinTable(name = "gig_skills",
 			joinColumns = @JoinColumn(name = "gig_id"),
@@ -178,6 +183,32 @@ public class Gig {
 			throw new BadRequestException("Only a draft can be published");
 		}
 		this.status = GigStatus.OPEN;
+	}
+
+	/** OPEN -> IN_PROGRESS. GigService checks "at least one hired worker" (needs the assignments table). */
+	public void start() {
+		if (status != GigStatus.OPEN) {
+			throw new BadRequestException("Only an open gig can be started");
+		}
+		this.status = GigStatus.IN_PROGRESS;
+	}
+
+	/** IN_PROGRESS -> COMPLETED (DONE-1). */
+	public void complete(Instant now) {
+		if (status != GigStatus.IN_PROGRESS) {
+			throw new BadRequestException("Only a gig in progress can be completed; start it first");
+		}
+		this.status = GigStatus.COMPLETED;
+		this.completedAt = now;
+	}
+
+	/** OPEN or IN_PROGRESS -> CANCELLED, with a reason (GIG-3). Drafts are deleted instead. */
+	public void cancel(String reason) {
+		if (status != GigStatus.OPEN && status != GigStatus.IN_PROGRESS) {
+			throw new BadRequestException("Only an open or in-progress gig can be cancelled");
+		}
+		this.status = GigStatus.CANCELLED;
+		this.cancelReason = reason;
 	}
 
 	public boolean isDraft() {
@@ -269,6 +300,14 @@ public class Gig {
 
 	public GigStatus getStatus() {
 		return status;
+	}
+
+	public String getCancelReason() {
+		return cancelReason;
+	}
+
+	public Instant getCompletedAt() {
+		return completedAt;
 	}
 
 	public Set<Skill> getSkills() {

@@ -97,7 +97,7 @@ public class GigService {
 
 	/**
 	 * GET /gigs/{id} (GIG-5). The owner sees everything, in any status. A worker with an ACTIVE assignment
-	 * sees the exact location too (and the gig after it starts). Everyone else sees only OPEN gigs of
+	 * sees the exact location too; a worker whose job ended still sees the gig, but not the exact location. Everyone else sees only OPEN gigs of
 	 * active providers, with the approximate point. Anything they may not see is a 404, so drafts and
 	 * suspended providers' gigs don't reveal that they exist.
 	 */
@@ -106,9 +106,11 @@ public class GigService {
 		Gig gig = gigs.findById(gigId).orElseThrow(() -> new ResourceNotFoundException("Gig not found"));
 		boolean mine = gig.isOwnedBy(viewerId);
 		boolean hired = assignments.existsByGigIdAndWorkerIdAndStatus(gigId, viewerId, AssignmentStatus.ACTIVE);
+		// A worker hired at any point (even if the job has ended) can still open the gig, e.g. to review it.
+		boolean wasHired = hired || assignments.existsByGigIdAndWorkerId(gigId, viewerId);
 		boolean visibleToOthers = gig.getStatus() == GigStatus.OPEN
 				&& gig.getProvider().getStatus() == UserStatus.ACTIVE;
-		if (!mine && !hired && !visibleToOthers) {
+		if (!mine && !wasHired && !visibleToOthers) {
 			throw new ResourceNotFoundException("Gig not found");
 		}
 		int openingsLeft = gig.getWorkersNeeded()
