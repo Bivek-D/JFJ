@@ -31,8 +31,8 @@ public class SecurityConfig {
 						.requestMatchers("/error").permitAll()
 						// Swagger UI and the OpenAPI spec: the contract the frontend builds against.
 						.requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-						// The skill list is reference data: the signup and gig screens need it without a login.
-						.requestMatchers(HttpMethod.GET, "/api/v1/skills").permitAll()
+						// Skills and categories are reference data: signup and gig screens need them without a login.
+						.requestMatchers(HttpMethod.GET, "/api/v1/skills", "/api/v1/categories").permitAll()
 						.requestMatchers(HttpMethod.POST,
 								"/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/refresh",
 								"/api/v1/auth/logout").permitAll()

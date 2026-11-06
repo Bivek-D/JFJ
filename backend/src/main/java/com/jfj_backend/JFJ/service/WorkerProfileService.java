@@ -1,7 +1,6 @@
 package com.jfj_backend.JFJ.service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -20,9 +19,7 @@ import com.jfj_backend.JFJ.entity.Skill;
 import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.entity.WorkerProfile;
 import com.jfj_backend.JFJ.enums.UserStatus;
-import com.jfj_backend.JFJ.exception.BadRequestException;
 import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
-import com.jfj_backend.JFJ.repository.SkillRepository;
 import com.jfj_backend.JFJ.repository.WorkerProfileRepository;
 
 /**
@@ -34,12 +31,13 @@ import com.jfj_backend.JFJ.repository.WorkerProfileRepository;
 public class WorkerProfileService {
 
 	private final WorkerProfileRepository profiles;
-	private final SkillRepository skills;
+	private final CatalogService catalogService;
 	private final UserService userService;
 
-	public WorkerProfileService(WorkerProfileRepository profiles, SkillRepository skills, UserService userService) {
+	public WorkerProfileService(WorkerProfileRepository profiles, CatalogService catalogService,
+			UserService userService) {
 		this.profiles = profiles;
-		this.skills = skills;
+		this.catalogService = catalogService;
 		this.userService = userService;
 	}
 
@@ -61,14 +59,9 @@ public class WorkerProfileService {
 
 	@Transactional
 	public WorkerProfileResponse replaceSkills(UUID userId, Set<Long> skillIds) {
-		List<Skill> found = skills.findAllById(skillIds);
-		if (found.size() != skillIds.size()) {
-			Set<Long> unknown = new HashSet<>(skillIds);
-			found.forEach(skill -> unknown.remove(skill.getId()));
-			throw new BadRequestException("Unknown skill id(s): " + unknown);
-		}
+		Set<Skill> found = catalogService.requireSkills(skillIds);
 		WorkerProfile profile = getOrCreate(userId);
-		profile.replaceSkills(new HashSet<>(found));
+		profile.replaceSkills(found);
 		return WorkerProfileResponse.from(profile);
 	}
 
