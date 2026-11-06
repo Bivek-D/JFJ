@@ -70,6 +70,16 @@ public class GlobalExceptionHandler {
 		return build(HttpStatus.NOT_FOUND, ex.getMessage(), request, Map.of());
 	}
 
+	@ExceptionHandler(TooManyRequestsException.class)
+	ResponseEntity<ErrorResponse> handleTooMany(TooManyRequestsException ex, HttpServletRequest request) {
+		return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request, Map.of());
+	}
+
+	@ExceptionHandler(ServiceUnavailableException.class)
+	ResponseEntity<ErrorResponse> handleUnavailable(ServiceUnavailableException ex, HttpServletRequest request) {
+		return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request, Map.of());
+	}
+
 	private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request,
 			Map<String, String> fieldErrors) {
 		ErrorResponse body = new ErrorResponse(Instant.now(), status.value(), status.getReasonPhrase(), message,
