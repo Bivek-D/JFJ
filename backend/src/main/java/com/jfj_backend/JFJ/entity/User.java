@@ -79,6 +79,26 @@ public class User {
 	@Column(nullable = false)
 	private boolean phoneVerified;
 
+	// Rating aggregates (V7), per role. Average = sum / count, worked out when read (never stored, never stale).
+	@Column(nullable = false)
+	private int ratingSum;
+
+	@Column(nullable = false)
+	private int ratingCount;
+
+	@Column(nullable = false)
+	private int providerRatingSum;
+
+	@Column(nullable = false)
+	private int providerRatingCount;
+
+	// Cache of SUM(xp_events.points); changed only by XpService, which also writes the event.
+	@Column(nullable = false)
+	private int totalXp;
+
+	@Column(nullable = false)
+	private int level = 1;
+
 	@CreationTimestamp
 	@Column(nullable = false, updatable = false)
 	private Instant createdAt;
@@ -198,6 +218,47 @@ public class User {
 
 	public boolean isPhoneVerified() {
 		return phoneVerified;
+	}
+
+	/** A new or edited rating as a worker: sumDelta = new - old (or the rating), countDelta = 1 or 0. */
+	public void addWorkerRating(int sumDelta, int countDelta) {
+		this.ratingSum += sumDelta;
+		this.ratingCount += countDelta;
+	}
+
+	public void addProviderRating(int sumDelta, int countDelta) {
+		this.providerRatingSum += sumDelta;
+		this.providerRatingCount += countDelta;
+	}
+
+	/** Only XpService calls this, right after writing the matching xp_events row. */
+	public void applyXp(int points, int newLevel) {
+		this.totalXp += points;
+		this.level = newLevel;
+	}
+
+	public int getRatingSum() {
+		return ratingSum;
+	}
+
+	public int getRatingCount() {
+		return ratingCount;
+	}
+
+	public int getProviderRatingSum() {
+		return providerRatingSum;
+	}
+
+	public int getProviderRatingCount() {
+		return providerRatingCount;
+	}
+
+	public int getTotalXp() {
+		return totalXp;
+	}
+
+	public int getLevel() {
+		return level;
 	}
 
 	public Instant getCreatedAt() {

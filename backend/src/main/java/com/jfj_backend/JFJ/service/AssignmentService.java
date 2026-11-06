@@ -18,6 +18,7 @@ import com.jfj_backend.JFJ.enums.AssignmentStatus;
 import com.jfj_backend.JFJ.exception.ForbiddenException;
 import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
 import com.jfj_backend.JFJ.repository.AssignmentRepository;
+import com.jfj_backend.JFJ.repository.ReviewRepository;
 
 /** A worker's jobs, and the contact reveal between the two parties of a job (APP-6, APP-7). */
 @Service
@@ -26,9 +27,11 @@ public class AssignmentService {
 	public static final Duration CONTACT_WINDOW = Duration.ofDays(7);
 
 	private final AssignmentRepository assignments;
+	private final ReviewRepository reviews;
 
-	public AssignmentService(AssignmentRepository assignments) {
+	public AssignmentService(AssignmentRepository assignments, ReviewRepository reviews) {
 		this.assignments = assignments;
+		this.reviews = reviews;
 	}
 
 	/** GET /assignments/mine: newest hire first. */
@@ -36,7 +39,14 @@ public class AssignmentService {
 	public PageResponse<AssignmentResponse> listMine(UUID workerId, int page, int size) {
 		PageRequest request = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, GigService.MAX_PAGE_SIZE),
 				Sort.by(Sort.Direction.DESC, "createdAt"));
-		return PageResponse.from(assignments.findByWorkerId(workerId, request), AssignmentResponse::from);
+		var result = assignments.findByWorkerId(workerId, request);
+		java.util.Set<UUID> reviewed = reviews.findByAssignmentIdIn(result.getContent().stream()
+				.map(Assignment::getId).toList()).stream()
+				.filter(r -> r.getReviewer().getId().equals(workerId))
+				.map(r -> r.getAssignment().getId())
+				.collect(java.util.stream.Collectors.toSet());
+		return PageResponse.from(result, a -> AssignmentResponse.from(a, reviewed.contains(a.getId()),
+				a.getEndedAt() == null ? null : a.getEndedAt().plus(ReviewService.REVIEW_WINDOW)));
 	}
 
 	/**

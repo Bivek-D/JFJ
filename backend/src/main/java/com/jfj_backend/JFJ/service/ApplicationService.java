@@ -18,6 +18,7 @@ import com.jfj_backend.JFJ.dto.response.PageResponse;
 import com.jfj_backend.JFJ.entity.Application;
 import com.jfj_backend.JFJ.entity.Assignment;
 import com.jfj_backend.JFJ.entity.Gig;
+import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.entity.WorkerProfile;
 import com.jfj_backend.JFJ.enums.ApplicationStatus;
 import com.jfj_backend.JFJ.enums.AssignmentStatus;
@@ -42,9 +43,11 @@ public class ApplicationService {
 	private final GigRepository gigs;
 	private final WorkerProfileRepository profiles;
 	private final UserService userService;
+	private final XpService xpService;
 
 	public ApplicationService(ApplicationRepository applications, AssignmentRepository assignments,
-			GigRepository gigs, WorkerProfileRepository profiles, UserService userService) {
+			GigRepository gigs, WorkerProfileRepository profiles, UserService userService, XpService xpService) {
+		this.xpService = xpService;
 		this.applications = applications;
 		this.assignments = assignments;
 		this.gigs = gigs;
@@ -79,13 +82,18 @@ public class ApplicationService {
 			throw new BadRequestException("This gig needs " + gig.getMinExperience().name().toLowerCase()
 					+ " experience or more");
 		}
+		User worker = userService.getById(workerId);
+		if (gig.getMinLevel() != null && worker.getLevel() < gig.getMinLevel()) {
+			throw new BadRequestException("This gig needs level " + gig.getMinLevel() + " ("
+					+ xpService.levelName(gig.getMinLevel()) + ") or higher");
+		}
 		if (applications.existsByGigIdAndWorkerId(gigId, workerId)) {
 			throw new DuplicateResourceException("You have already applied to this gig");
 		}
 		String cleanNote = (note == null || note.isBlank()) ? null : note.trim();
 		try {
 			// Flush now: if a double tap raced past the check above, the UNIQUE (gig_id, worker_id) fails here.
-			Application saved = applications.saveAndFlush(new Application(gig, userService.getById(workerId), cleanNote));
+			Application saved = applications.saveAndFlush(new Application(gig, worker, cleanNote));
 			return ApplicationResponse.from(saved, null);
 		}
 		catch (DataIntegrityViolationException ex) {
@@ -113,9 +121,18 @@ public class ApplicationService {
 
 	// ---------- provider ----------
 
-	/** APP-3: owner only, newest first, optionally one status. Sorting by rating/level comes with B5. */
+	/** How the provider wants applicants ordered (APP-3). */
+	public enum ApplicantSort {
+		NEWEST, RATING, LEVEL
+	}
+
+	/**
+	 * APP-3: owner only, optionally one status. RATING = best average first (unrated last), LEVEL = highest
+	 * level first (then XP); ties stay newest first. Sorted in Java: a gig has tens of applicants, not thousands.
+	 */
 	@Transactional(readOnly = true)
-	public List<ApplicantResponse> listForGig(UUID providerId, UUID gigId, ApplicationStatus status) {
+	public List<ApplicantResponse> listForGig(UUID providerId, UUID gigId, ApplicationStatus status,
+			ApplicantSort sort) {
 		Gig gig = gigs.findById(gigId).orElseThrow(() -> new ResourceNotFoundException("Gig not found"));
 		requireOwner(gig, providerId);
 		List<Application> list = status == null
@@ -123,9 +140,18 @@ public class ApplicationService {
 				: applications.findByGigIdAndStatusOrderByCreatedAtDesc(gigId, status);
 		Map<UUID, Assignment> hires = assignmentsFor(list);
 		// One profile lookup per applicant (an "N+1" pattern). Fine for tens of applicants; batch it if it grows.
+		java.util.Comparator<ApplicantResponse> order = switch (sort == null ? ApplicantSort.NEWEST : sort) {
+			case NEWEST -> (x, y) -> 0;
+			case RATING -> java.util.Comparator.comparing(
+					(ApplicantResponse r) -> r.worker().rating().average(),
+					java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()));
+			case LEVEL -> java.util.Comparator.comparing((ApplicantResponse r) -> r.worker().level().level())
+					.thenComparing(r -> r.worker().level().totalXp()).reversed();
+		};
+		// The list already comes newest first; a stable sort keeps that order among equals.
 		return list.stream()
-				.map(a -> ApplicantResponse.from(a, profiles.findById(a.getWorker().getId()).orElse(null),
-						hires.containsKey(a.getId()) ? hires.get(a.getId()).getId() : null))
+				.map(a -> toApplicant(a, hires.containsKey(a.getId()) ? hires.get(a.getId()).getId() : null))
+				.sorted(order)
 				.toList();
 	}
 
@@ -195,7 +221,7 @@ public class ApplicationService {
 
 	private ApplicantResponse toApplicant(Application application, UUID assignmentId) {
 		return ApplicantResponse.from(application, profiles.findById(application.getWorker().getId()).orElse(null),
-				assignmentId);
+				assignmentId, xpService.levelInfo(application.getWorker()));
 	}
 
 	private Map<UUID, Assignment> assignmentsFor(List<Application> list) {

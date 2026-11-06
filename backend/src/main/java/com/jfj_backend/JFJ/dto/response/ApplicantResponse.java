@@ -13,16 +13,18 @@ import com.jfj_backend.JFJ.enums.ExperienceLevel;
 /**
  * An application as the PROVIDER sees it (APP-3): the note plus what the worker's public profile shows.
  * No phone, email or address here; the phone is revealed only after hiring (contact reveal, Day 10).
- * Not yet: rating and level (B5), work proofs.
+ * rating = as a worker; level = earned level. Not yet: work proofs.
  */
 public record ApplicantResponse(UUID id, ApplicationStatus status, String note, Instant createdAt,
 		ApplicantWorker worker, UUID assignmentId) {
 
 	public record ApplicantWorker(UUID id, String name, String city, String photoUrl, ExperienceLevel experienceLevel,
-			int experienceYears, List<String> languages, List<SkillResponse> skills) {
+			int experienceYears, List<String> languages, List<SkillResponse> skills, RatingSummary rating,
+			LevelInfo level) {
 	}
 
-	public static ApplicantResponse from(Application application, WorkerProfile profile, UUID assignmentId) {
+	public static ApplicantResponse from(Application application, WorkerProfile profile, UUID assignmentId,
+			LevelInfo level) {
 		List<SkillResponse> skills = profile == null ? List.of()
 				: profile.getSkills().stream().map(SkillResponse::from)
 						.sorted(Comparator.comparing(SkillResponse::name)).toList();
@@ -31,7 +33,9 @@ public record ApplicantResponse(UUID id, ApplicationStatus status, String note, 
 				profile == null ? null : profile.getPhotoUrl(),
 				profile == null ? null : profile.getExperienceLevel(),
 				profile == null ? 0 : profile.getExperienceYears(),
-				profile == null ? List.of() : profile.getLanguages(), skills);
+				profile == null ? List.of() : profile.getLanguages(), skills,
+				RatingSummary.of(application.getWorker().getRatingSum(), application.getWorker().getRatingCount()),
+				level);
 		return new ApplicantResponse(application.getId(), application.getStatus(), application.getNote(),
 				application.getCreatedAt(), worker, assignmentId);
 	}

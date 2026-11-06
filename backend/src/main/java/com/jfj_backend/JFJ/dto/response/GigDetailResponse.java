@@ -17,22 +17,24 @@ import com.jfj_backend.JFJ.util.GeoUtils;
  * GET /api/v1/gigs/{id} (FIND-3, GIG-5). lat/lng are ALWAYS the approximate point.
  * exact is null unless the viewer may see it: the owner, or a worker with an ACTIVE assignment on it.
  * The frontend draws a 500 m circle when exact is null and a pin when it isn't.
- * openingsLeft = workersNeeded - ACTIVE assignments. Not yet: provider rating and level (B5), photos.
+ * openingsLeft = workersNeeded - ACTIVE assignments. Not yet: photos.
  */
 public record GigDetailResponse(UUID id, String title, String description, CategoryResponse category,
 		PayType payType, BigDecimal payAmount, int workersNeeded, int openingsLeft, ExperienceLevel minExperience,
 		LocalDate startDate, String durationText, LocalDate applyDeadline, List<SkillResponse> skills,
 		String locality, String city, double lat, double lng, GigStatus status, ProviderSummary provider,
-		boolean mine, ExactLocation exact, Instant createdAt) {
+		boolean mine, ExactLocation exact, Instant createdAt, Integer minLevel) {
 
-	public record ProviderSummary(UUID id, String name) {
+	/** FIND-3: the provider's name, rating as a provider, and earned level. */
+	public record ProviderSummary(UUID id, String name, RatingSummary rating, LevelInfo level) {
 	}
 
 	/** Only for the owner and hired workers: exact pin, full address, provider phone. */
 	public record ExactLocation(double lat, double lng, String addressLine, String providerPhone) {
 	}
 
-	public static GigDetailResponse from(Gig gig, int openingsLeft, boolean mine, boolean showExact) {
+	public static GigDetailResponse from(Gig gig, int openingsLeft, boolean mine, boolean showExact,
+			LevelInfo providerLevel) {
 		List<SkillResponse> skills = gig.getSkills().stream()
 				.map(SkillResponse::from)
 				.sorted(Comparator.comparing(SkillResponse::name))
@@ -46,7 +48,10 @@ public record GigDetailResponse(UUID id, String title, String description, Categ
 				openingsLeft, gig.getMinExperience(), gig.getStartDate(), gig.getDurationText(),
 				gig.getApplyDeadline(), skills, gig.getLocality(), gig.getCity(), GeoUtils.lat(gig.getPublicLocation()),
 				GeoUtils.lng(gig.getPublicLocation()), gig.getStatus(),
-				new ProviderSummary(gig.getProvider().getId(), gig.getProvider().getName()), mine, exact,
-				gig.getCreatedAt());
+				new ProviderSummary(gig.getProvider().getId(), gig.getProvider().getName(),
+						RatingSummary.of(gig.getProvider().getProviderRatingSum(),
+								gig.getProvider().getProviderRatingCount()),
+						providerLevel),
+				mine, exact, gig.getCreatedAt(), gig.getMinLevel());
 	}
 }

@@ -18,8 +18,11 @@ import com.jfj_backend.JFJ.dto.response.WorkerProfileResponse;
 import com.jfj_backend.JFJ.entity.Skill;
 import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.entity.WorkerProfile;
+import com.jfj_backend.JFJ.enums.AssignmentStatus;
 import com.jfj_backend.JFJ.enums.UserStatus;
+import com.jfj_backend.JFJ.enums.XpEventType;
 import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
+import com.jfj_backend.JFJ.repository.AssignmentRepository;
 import com.jfj_backend.JFJ.repository.WorkerProfileRepository;
 
 /**
@@ -33,12 +36,16 @@ public class WorkerProfileService {
 	private final WorkerProfileRepository profiles;
 	private final CatalogService catalogService;
 	private final UserService userService;
+	private final XpService xpService;
+	private final AssignmentRepository assignments;
 
 	public WorkerProfileService(WorkerProfileRepository profiles, CatalogService catalogService,
-			UserService userService) {
+			UserService userService, XpService xpService, AssignmentRepository assignments) {
 		this.profiles = profiles;
 		this.catalogService = catalogService;
 		this.userService = userService;
+		this.xpService = xpService;
+		this.assignments = assignments;
 	}
 
 	@Transactional(readOnly = true)
@@ -51,9 +58,9 @@ public class WorkerProfileService {
 	@Transactional
 	public WorkerProfileResponse updateOwn(UUID userId, UpdateWorkerProfileRequest request) {
 		WorkerProfile profile = getOrCreate(userId);
-		// Not yet: when profileComplete first turns true, award PROFILE_COMPLETE XP (B5).
 		profile.updateDetails(blankToNull(request.photoUrl()), blankToNull(request.description()),
 				cleanLanguages(request.languages()), request.experienceYears(), request.experienceLevel());
+		awardIfComplete(profile);
 		return WorkerProfileResponse.from(profile);
 	}
 
@@ -62,6 +69,7 @@ public class WorkerProfileService {
 		Set<Skill> found = catalogService.requireSkills(skillIds);
 		WorkerProfile profile = getOrCreate(userId);
 		profile.replaceSkills(found);
+		awardIfComplete(profile);
 		return WorkerProfileResponse.from(profile);
 	}
 
@@ -70,7 +78,8 @@ public class WorkerProfileService {
 	public PublicWorkerProfileResponse getPublic(UUID userId) {
 		return profiles.findById(userId)
 				.filter(profile -> profile.getUser().getStatus() == UserStatus.ACTIVE)
-				.map(PublicWorkerProfileResponse::from)
+				.map(profile -> PublicWorkerProfileResponse.from(profile, xpService.levelInfo(profile.getUser()),
+						assignments.countByWorkerIdAndStatus(userId, AssignmentStatus.COMPLETED)))
 				.orElseThrow(() -> new ResourceNotFoundException("Worker profile not found"));
 	}
 
@@ -81,6 +90,14 @@ public class WorkerProfileService {
 			User user = userService.getById(userId);
 			return profiles.save(new WorkerProfile(user));
 		});
+	}
+
+	/** +10 XP the first time the profile is complete (PRD 5.7). Becoming complete again later gives nothing. */
+	private void awardIfComplete(WorkerProfile profile) {
+		if (profile.isProfileComplete()) {
+			xpService.award(xpService.lock(profile.getUserId()), XpEventType.PROFILE_COMPLETE, profile.getUserId(), 0,
+					XpService.PROFILE_COMPLETE_XP);
+		}
 	}
 
 	private static String blankToNull(String value) {

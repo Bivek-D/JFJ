@@ -70,11 +70,13 @@ public class ApplicationController {
 
 	// ---------- provider ----------
 
+	/** ?status=APPLIED etc. to filter; ?sort=NEWEST (default), RATING or LEVEL. */
 	@ProviderOnly
 	@GetMapping("/gigs/{gigId}/applications")
 	public List<ApplicantResponse> listForGig(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID gigId,
-			@RequestParam(required = false) ApplicationStatus status) {
-		return applicationService.listForGig(userId(jwt), gigId, status);
+			@RequestParam(required = false) ApplicationStatus status,
+			@RequestParam(required = false) ApplicationService.ApplicantSort sort) {
+		return applicationService.listForGig(userId(jwt), gigId, status, sort);
 	}
 
 	@ProviderOnly

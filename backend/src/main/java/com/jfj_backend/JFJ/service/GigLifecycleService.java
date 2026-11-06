@@ -2,6 +2,7 @@ package com.jfj_backend.JFJ.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -11,8 +12,10 @@ import com.jfj_backend.JFJ.dto.response.OwnerGigResponse;
 import com.jfj_backend.JFJ.entity.Application;
 import com.jfj_backend.JFJ.entity.Assignment;
 import com.jfj_backend.JFJ.entity.Gig;
+import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.enums.ApplicationStatus;
 import com.jfj_backend.JFJ.enums.AssignmentStatus;
+import com.jfj_backend.JFJ.enums.XpEventType;
 import com.jfj_backend.JFJ.exception.BadRequestException;
 import com.jfj_backend.JFJ.exception.ForbiddenException;
 import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
@@ -33,12 +36,14 @@ public class GigLifecycleService {
 	private final GigRepository gigs;
 	private final AssignmentRepository assignments;
 	private final ApplicationRepository applications;
+	private final XpService xpService;
 
 	public GigLifecycleService(GigRepository gigs, AssignmentRepository assignments,
-			ApplicationRepository applications) {
+			ApplicationRepository applications, XpService xpService) {
 		this.gigs = gigs;
 		this.assignments = assignments;
 		this.applications = applications;
+		this.xpService = xpService;
 	}
 
 	/** OPEN -> IN_PROGRESS; needs at least one hired worker. Not yet: GigStartJob does this on the start date. */
@@ -54,7 +59,7 @@ public class GigLifecycleService {
 
 	/**
 	 * IN_PROGRESS -> COMPLETED (DONE-1): every ACTIVE assignment becomes COMPLETED with the same end
-	 * time, and waiting applications are rejected. Not yet: completion XP (B5) and notifications.
+	 * time, waiting applications are rejected, and completion XP is awarded. Not yet: notifications.
 	 */
 	@Transactional
 	public OwnerGigResponse complete(UUID providerId, UUID gigId) {
@@ -67,6 +72,18 @@ public class GigLifecycleService {
 		gig.complete(now);
 		active.forEach(assignment -> assignment.complete(now));
 		rejectPending(gigId);
+
+		// Completion XP in the same transaction (DONE-1, PRD 10.2): +20 per worker, +10 once for the provider.
+		// All users are locked first, in one fixed order (lockAll), to avoid deadlocks.
+		List<UUID> userIds = new java.util.ArrayList<>(active.stream().map(a -> a.getWorker().getId()).toList());
+		userIds.add(providerId);
+		Map<UUID, User> locked = xpService.lockAll(userIds);
+		for (Assignment assignment : active) {
+			xpService.award(locked.get(assignment.getWorker().getId()), XpEventType.GIG_COMPLETED,
+					assignment.getId(), 0, XpService.GIG_COMPLETED_XP);
+		}
+		xpService.award(locked.get(providerId), XpEventType.GIG_COMPLETED_PROVIDER, gigId, 0,
+				XpService.GIG_COMPLETED_PROVIDER_XP);
 		return OwnerGigResponse.from(gig);
 	}
 
