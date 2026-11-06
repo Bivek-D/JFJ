@@ -16,6 +16,14 @@ jwt:
   secret: ${JWT_SECRET}
   access-ttl: ${JWT_ACCESS_TTL_MIN:15}m
   refresh-ttl: ${JWT_REFRESH_TTL_DAYS:7}d
+# Address search (PRD 6.4). No key = the geo endpoints answer 503 and everything else works.
+geoapify:
+  api-key: ${GEOAPIFY_API_KEY:}
+  base-url: https://api.geoapify.com
+  connect-timeout: 3s
+  read-timeout: 5s
+  requests-per-minute: 30
+  cache-ttl: 10m
 management:
   endpoints:
     web:

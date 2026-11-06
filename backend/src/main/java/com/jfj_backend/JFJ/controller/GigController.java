@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import com.jfj_backend.JFJ.config.OpenApiConfig;
 import com.jfj_backend.JFJ.dto.request.GigRequest;
+import com.jfj_backend.JFJ.dto.response.GigDetailResponse;
 import com.jfj_backend.JFJ.dto.response.OwnerGigResponse;
 import com.jfj_backend.JFJ.dto.response.PageResponse;
 import com.jfj_backend.JFJ.enums.GigStatus;
@@ -28,7 +29,7 @@ import com.jfj_backend.JFJ.service.GigService;
 
 import jakarta.validation.Valid;
 
-/** Provider endpoints for gigs. Worker search (GET /gigs, /gigs/map) comes on Day 7, detail on Day 8. */
+/** Gig endpoints: provider actions (@ProviderOnly) and the gig detail page (any mode). Search: GigSearchController. */
 @RestController
 @RequestMapping("/api/v1/gigs")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -65,6 +66,15 @@ public class GigController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		gigService.delete(userId(jwt), id);
+	}
+
+	/**
+	 * One gig, any mode. The address line, exact pin and provider phone are only in "exact", which is
+	 * filled for the owner only (hired workers too from B4). Others get the approximate point.
+	 */
+	@GetMapping("/{id}")
+	public GigDetailResponse detail(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+		return gigService.getDetail(userId(jwt), id);
 	}
 
 	/** My gigs, newest first. ?status=DRAFT etc. to filter; page is 0-based, size max 50. */

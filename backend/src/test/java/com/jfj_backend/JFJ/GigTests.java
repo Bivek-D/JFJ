@@ -232,6 +232,37 @@ class GigTests {
 	}
 
 	@Test
+	void detailHidesTheAddressFromEveryoneButTheOwner() throws Exception {
+		String id = createId();
+		User worker = users.saveAndFlush(new User("Ritu", "ritu@example.com", "9567890123", "$2a$10$hash",
+				LocalDate.of(1997, 8, 15), "4 Tea Garden Lane", "Guwahati", "Assam", "781005"));
+
+		// A draft is invisible to others (404), visible to its owner.
+		send(get(GIGS + "/" + id), worker, Mode.WORKER).andExpect(status().isNotFound());
+		send(post(GIGS + "/" + id + "/publish"), provider, Mode.PROVIDER).andExpect(status().isOk());
+
+		String body = send(get(GIGS + "/" + id), worker, Mode.WORKER)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.title").value("Help at a wedding"))
+				.andExpect(jsonPath("$.locality").value("Zoo Road"))
+				.andExpect(jsonPath("$.provider.name").value("Meena"))
+				.andExpect(jsonPath("$.mine").value(false))
+				.andExpect(jsonPath("$.exact").doesNotExist())
+				.andReturn().getResponse().getContentAsString();
+		// Not anywhere in the text: address line, provider phone, exact coordinates.
+		assertThat(body).doesNotContain("House 12", "9678901234", "26.1445", "91.7362");
+
+		// The owner gets the exact block, in any mode.
+		send(get(GIGS + "/" + id), provider, Mode.WORKER)
+				.andExpect(jsonPath("$.mine").value(true))
+				.andExpect(jsonPath("$.exact.lat").value(26.1445))
+				.andExpect(jsonPath("$.exact.addressLine").value("House 12, Lane 3"))
+				.andExpect(jsonPath("$.exact.providerPhone").value("9678901234"));
+
+		send(get(GIGS + "/" + UUID.randomUUID()), worker, Mode.WORKER).andExpect(status().isNotFound());
+	}
+
+	@Test
 	void mineListsOnlyMyGigsWithStatusFilter() throws Exception {
 		String first = createId();
 		createId();

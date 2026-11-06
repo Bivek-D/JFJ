@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.jfj_backend.JFJ.dto.request.GigRequest;
+import com.jfj_backend.JFJ.dto.response.GigDetailResponse;
 import com.jfj_backend.JFJ.dto.response.OwnerGigResponse;
 import com.jfj_backend.JFJ.dto.response.PageResponse;
 import com.jfj_backend.JFJ.entity.Gig;
 import com.jfj_backend.JFJ.enums.GigStatus;
+import com.jfj_backend.JFJ.enums.UserStatus;
 import com.jfj_backend.JFJ.exception.BadRequestException;
 import com.jfj_backend.JFJ.exception.ForbiddenException;
 import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
@@ -82,6 +84,24 @@ public class GigService {
 			throw new BadRequestException("Only a draft can be deleted");
 		}
 		gigs.delete(gig);
+	}
+
+	/**
+	 * GET /gigs/{id} (GIG-5). The owner sees everything, in any status. Everyone else sees only OPEN
+	 * gigs of active providers, with the approximate point and no address line or phone. Anything they
+	 * may not see is a 404, so drafts and suspended providers' gigs don't reveal that they exist.
+	 * Not yet (B4): workers with an ACTIVE assignment also see the exact location and later statuses.
+	 */
+	@Transactional(readOnly = true)
+	public GigDetailResponse getDetail(UUID viewerId, UUID gigId) {
+		Gig gig = gigs.findById(gigId).orElseThrow(() -> new ResourceNotFoundException("Gig not found"));
+		boolean mine = gig.isOwnedBy(viewerId);
+		boolean visibleToOthers = gig.getStatus() == GigStatus.OPEN
+				&& gig.getProvider().getStatus() == UserStatus.ACTIVE;
+		if (!mine && !visibleToOthers) {
+			throw new ResourceNotFoundException("Gig not found");
+		}
+		return GigDetailResponse.from(gig, mine, mine);
 	}
 
 	/** GET /gigs/mine, newest first, optionally one status only. */
