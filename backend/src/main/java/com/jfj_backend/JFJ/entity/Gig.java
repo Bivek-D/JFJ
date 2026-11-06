@@ -166,7 +166,7 @@ public class Gig {
 		if (locationEditCount >= MAX_LOCATION_EDITS) {
 			throw new BadRequestException("The location can be changed at most " + MAX_LOCATION_EDITS + " times");
 		}
-		// Not yet: location is also locked after the first hire (B4).
+		// Locked after the first hire too: GigService refuses every edit once someone is hired.
 		this.location = newExact;
 		this.publicLocation = GeoUtils.approximate(newExact, random);
 		this.locationEditCount++;
@@ -188,7 +188,7 @@ public class Gig {
 		return provider.getId().equals(userId);
 	}
 
-	// Not yet: OPEN stops being editable once a worker is hired (B4 adds assignments).
+	// "OPEN, but nobody hired yet" needs the assignments table, so GigService checks that part.
 	private void requireEditable() {
 		if (status != GigStatus.DRAFT && status != GigStatus.OPEN) {
 			throw new BadRequestException("This gig can no longer be edited");

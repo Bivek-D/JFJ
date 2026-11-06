@@ -16,11 +16,13 @@ import com.jfj_backend.JFJ.dto.response.GigDetailResponse;
 import com.jfj_backend.JFJ.dto.response.OwnerGigResponse;
 import com.jfj_backend.JFJ.dto.response.PageResponse;
 import com.jfj_backend.JFJ.entity.Gig;
+import com.jfj_backend.JFJ.enums.AssignmentStatus;
 import com.jfj_backend.JFJ.enums.GigStatus;
 import com.jfj_backend.JFJ.enums.UserStatus;
 import com.jfj_backend.JFJ.exception.BadRequestException;
 import com.jfj_backend.JFJ.exception.ForbiddenException;
 import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
+import com.jfj_backend.JFJ.repository.AssignmentRepository;
 import com.jfj_backend.JFJ.repository.GigRepository;
 import com.jfj_backend.JFJ.util.AgeUtils;
 import com.jfj_backend.JFJ.util.GeoUtils;
@@ -36,13 +38,16 @@ public class GigService {
 	public static final int MAX_PAGE_SIZE = 50;
 
 	private final GigRepository gigs;
+	private final AssignmentRepository assignments;
 	private final CatalogService catalogService;
 	private final UserService userService;
 	// SecureRandom: the offset direction must not be guessable, or the exact point could be worked back.
 	private final RandomGenerator random = new SecureRandom();
 
-	public GigService(GigRepository gigs, CatalogService catalogService, UserService userService) {
+	public GigService(GigRepository gigs, AssignmentRepository assignments, CatalogService catalogService,
+			UserService userService) {
 		this.gigs = gigs;
+		this.assignments = assignments;
 		this.catalogService = catalogService;
 		this.userService = userService;
 	}
@@ -59,6 +64,10 @@ public class GigService {
 	@Transactional
 	public OwnerGigResponse update(UUID providerId, UUID gigId, GigRequest request) {
 		Gig gig = getOwn(providerId, gigId);
+		// Lifecycle table: OPEN gigs are editable only until someone is hired (also locks the location, GIG-6).
+		if (assignments.existsByGigId(gigId)) {
+			throw new BadRequestException("This gig can't be edited after a worker has been hired");
+		}
 		checkDates(request);
 		applyDetails(gig, request);
 		gig.moveTo(GeoUtils.point(request.lat(), request.lng()), random);
@@ -87,21 +96,24 @@ public class GigService {
 	}
 
 	/**
-	 * GET /gigs/{id} (GIG-5). The owner sees everything, in any status. Everyone else sees only OPEN
-	 * gigs of active providers, with the approximate point and no address line or phone. Anything they
-	 * may not see is a 404, so drafts and suspended providers' gigs don't reveal that they exist.
-	 * Not yet (B4): workers with an ACTIVE assignment also see the exact location and later statuses.
+	 * GET /gigs/{id} (GIG-5). The owner sees everything, in any status. A worker with an ACTIVE assignment
+	 * sees the exact location too (and the gig after it starts). Everyone else sees only OPEN gigs of
+	 * active providers, with the approximate point. Anything they may not see is a 404, so drafts and
+	 * suspended providers' gigs don't reveal that they exist.
 	 */
 	@Transactional(readOnly = true)
 	public GigDetailResponse getDetail(UUID viewerId, UUID gigId) {
 		Gig gig = gigs.findById(gigId).orElseThrow(() -> new ResourceNotFoundException("Gig not found"));
 		boolean mine = gig.isOwnedBy(viewerId);
+		boolean hired = assignments.existsByGigIdAndWorkerIdAndStatus(gigId, viewerId, AssignmentStatus.ACTIVE);
 		boolean visibleToOthers = gig.getStatus() == GigStatus.OPEN
 				&& gig.getProvider().getStatus() == UserStatus.ACTIVE;
-		if (!mine && !visibleToOthers) {
+		if (!mine && !hired && !visibleToOthers) {
 			throw new ResourceNotFoundException("Gig not found");
 		}
-		return GigDetailResponse.from(gig, mine, mine);
+		int openingsLeft = gig.getWorkersNeeded()
+				- (int) assignments.countByGigIdAndStatus(gigId, AssignmentStatus.ACTIVE);
+		return GigDetailResponse.from(gig, openingsLeft, mine, mine || hired);
 	}
 
 	/** GET /gigs/mine, newest first, optionally one status only. */
