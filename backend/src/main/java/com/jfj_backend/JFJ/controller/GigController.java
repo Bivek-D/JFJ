@@ -70,7 +70,7 @@ public class GigController {
 
 	/**
 	 * One gig, any mode. The address line, exact pin and provider phone are only in "exact", which is
-	 * filled for the owner only (hired workers too from B4). Others get the approximate point.
+	 * filled for the owner and for workers hired on this gig. Others get the approximate point.
 	 */
 	@GetMapping("/{id}")
 	public GigDetailResponse detail(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
