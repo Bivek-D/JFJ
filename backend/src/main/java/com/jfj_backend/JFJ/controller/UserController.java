@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.jfj_backend.JFJ.config.OpenApiConfig;
 import com.jfj_backend.JFJ.dto.response.MeResponse;
 import com.jfj_backend.JFJ.enums.Mode;
+import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.service.UserService;
+import com.jfj_backend.JFJ.service.XpService;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -21,9 +23,11 @@ import com.jfj_backend.JFJ.service.UserService;
 public class UserController {
 
 	private final UserService userService;
+	private final XpService xpService;
 
-	public UserController(UserService userService) {
+	public UserController(UserService userService, XpService xpService) {
 		this.userService = userService;
+		this.xpService = xpService;
 	}
 
 	/** @AuthenticationPrincipal hands us the already-verified access token of this request. */
@@ -31,6 +35,7 @@ public class UserController {
 	public MeResponse me(@AuthenticationPrincipal Jwt jwt) {
 		UUID userId = UUID.fromString(jwt.getSubject());
 		Mode mode = Mode.valueOf(jwt.getClaimAsString("mode"));
-		return MeResponse.from(userService.getById(userId), mode);
+		User user = userService.getById(userId);
+		return MeResponse.from(user, mode, xpService.levelInfo(user));
 	}
 }

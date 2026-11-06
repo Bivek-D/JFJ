@@ -107,6 +107,9 @@ public class Gig {
 	@Column(nullable = false, length = 12)
 	private GigStatus status = GigStatus.DRAFT;
 
+	// Lowest earned level (1-5) a worker needs to apply; null = anyone (PRD 5.7).
+	private Integer minLevel;
+
 	@Column(length = 500)
 	private String cancelReason;
 
@@ -183,6 +186,12 @@ public class Gig {
 			throw new BadRequestException("Only a draft can be published");
 		}
 		this.status = GigStatus.OPEN;
+	}
+
+	/** Separate from updateDetails so existing callers stay simple; same editing rule. */
+	public void changeMinLevel(Integer minLevel) {
+		requireEditable();
+		this.minLevel = minLevel;
 	}
 
 	/** OPEN -> IN_PROGRESS. GigService checks "at least one hired worker" (needs the assignments table). */
@@ -300,6 +309,10 @@ public class Gig {
 
 	public GigStatus getStatus() {
 		return status;
+	}
+
+	public Integer getMinLevel() {
+		return minLevel;
 	}
 
 	public String getCancelReason() {

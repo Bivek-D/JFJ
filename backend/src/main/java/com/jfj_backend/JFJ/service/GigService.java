@@ -41,11 +41,13 @@ public class GigService {
 	private final AssignmentRepository assignments;
 	private final CatalogService catalogService;
 	private final UserService userService;
+	private final XpService xpService;
 	// SecureRandom: the offset direction must not be guessable, or the exact point could be worked back.
 	private final RandomGenerator random = new SecureRandom();
 
 	public GigService(GigRepository gigs, AssignmentRepository assignments, CatalogService catalogService,
-			UserService userService) {
+			UserService userService, XpService xpService) {
+		this.xpService = xpService;
 		this.gigs = gigs;
 		this.assignments = assignments;
 		this.catalogService = catalogService;
@@ -115,7 +117,7 @@ public class GigService {
 		}
 		int openingsLeft = gig.getWorkersNeeded()
 				- (int) assignments.countByGigIdAndStatus(gigId, AssignmentStatus.ACTIVE);
-		return GigDetailResponse.from(gig, openingsLeft, mine, mine || hired);
+		return GigDetailResponse.from(gig, openingsLeft, mine, mine || hired, xpService.levelInfo(gig.getProvider()));
 	}
 
 	/** GET /gigs/mine, newest first, optionally one status only. */
@@ -144,6 +146,7 @@ public class GigService {
 				request.minExperience(), request.startDate(), request.durationText().trim(),
 				request.applyDeadline(), request.addressLine().trim(), request.locality().trim(),
 				request.city().trim(), catalogService.requireSkills(request.skillIds()));
+		gig.changeMinLevel(request.minLevel());
 	}
 
 	/** "Today" is today in India, whatever the server's clock zone. */

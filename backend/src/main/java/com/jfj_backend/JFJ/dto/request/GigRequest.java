@@ -42,5 +42,6 @@ public record GigRequest(
 		@DecimalMax(value = "98.0", message = "must be inside India") Double lng,
 		@NotBlank @Size(max = 255) String addressLine,
 		@NotBlank @Size(max = 100) String locality,
-		@NotBlank @Size(max = 100) String city) {
+		@NotBlank @Size(max = 100) String city,
+		@Min(1) @Max(5) Integer minLevel) {
 }

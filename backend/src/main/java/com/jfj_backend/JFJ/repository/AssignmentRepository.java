@@ -25,6 +25,10 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
 
 	List<Assignment> findByGigIdAndStatus(UUID gigId, AssignmentStatus status);
 
+	List<Assignment> findByGigIdAndStatusIn(UUID gigId, List<AssignmentStatus> statuses);
+
+	long countByWorkerIdAndStatus(UUID workerId, AssignmentStatus status);
+
 	Page<Assignment> findByWorkerId(UUID workerId, Pageable pageable);
 
 	List<Assignment> findByApplicationIdIn(List<UUID> applicationIds);

@@ -4,8 +4,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 
 import com.jfj_backend.JFJ.entity.User;
+
+import jakarta.persistence.LockModeType;
 
 /**
  * Database access for users. Spring Data writes the SQL from the method names,
@@ -18,4 +22,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 	boolean existsByEmail(String email);
 
 	boolean existsByPhone(String phone);
+
+	/** Loads and locks the user row (SELECT ... FOR UPDATE) for rating and XP changes (PRD 10.2). */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select u from User u where u.id = :id")
+	Optional<User> findByIdForUpdate(UUID id);
 }

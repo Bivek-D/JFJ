@@ -22,7 +22,7 @@ public record OwnerGigResponse(UUID id, String title, String description, Catego
 		PayType payType, BigDecimal payAmount, int workersNeeded, ExperienceLevel minExperience,
 		LocalDate startDate, String durationText, LocalDate applyDeadline, List<SkillResponse> skills,
 		double lat, double lng, double approxLat, double approxLng, String addressLine, String locality,
-		String city, int locationEditsLeft, GigStatus status, Instant createdAt) {
+		String city, int locationEditsLeft, GigStatus status, Instant createdAt, Integer minLevel) {
 
 	public static OwnerGigResponse from(Gig gig) {
 		List<SkillResponse> skills = gig.getSkills().stream()
@@ -35,6 +35,6 @@ public record OwnerGigResponse(UUID id, String title, String description, Catego
 				gig.getApplyDeadline(), skills, GeoUtils.lat(gig.getLocation()), GeoUtils.lng(gig.getLocation()),
 				GeoUtils.lat(gig.getPublicLocation()), GeoUtils.lng(gig.getPublicLocation()), gig.getAddressLine(),
 				gig.getLocality(), gig.getCity(), Gig.MAX_LOCATION_EDITS - gig.getLocationEditCount(),
-				gig.getStatus(), gig.getCreatedAt());
+				gig.getStatus(), gig.getCreatedAt(), gig.getMinLevel());
 	}
 }
