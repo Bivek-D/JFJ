@@ -30,7 +30,6 @@ public class UserController {
 		this.xpService = xpService;
 	}
 
-	/** @AuthenticationPrincipal hands us the already-verified access token of this request. */
 	@GetMapping("/me")
 	public MeResponse me(@AuthenticationPrincipal Jwt jwt) {
 		UUID userId = UUID.fromString(jwt.getSubject());

@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** One row of categories (V4). Seeded by the migration; admins manage it later (B6). */
 @Entity
 @Table(name = "categories")
 public class Category {

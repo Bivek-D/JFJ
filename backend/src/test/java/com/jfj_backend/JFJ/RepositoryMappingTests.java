@@ -22,8 +22,6 @@ import com.jfj_backend.JFJ.enums.UserStatus;
 import com.jfj_backend.JFJ.repository.RefreshTokenRepository;
 import com.jfj_backend.JFJ.repository.UserRepository;
 
-// Saves and reads back real rows, proving the entities match the V2 tables.
-// @Transactional rolls each test back, so tests don't see each other's rows.
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
 @Transactional

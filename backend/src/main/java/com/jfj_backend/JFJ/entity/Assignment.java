@@ -22,7 +22,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-/** One row of assignments (V5): a hired worker on a gig. */
 @Entity
 @Table(name = "assignments")
 public class Assignment {
@@ -69,14 +68,12 @@ public class Assignment {
 		this.worker = application.getWorker();
 	}
 
-	/** ACTIVE -> COMPLETED when the gig is completed. */
 	public void complete(Instant now) {
 		requireActive();
 		this.status = AssignmentStatus.COMPLETED;
 		this.endedAt = now;
 	}
 
-	/** ACTIVE -> REMOVED, e.g. reason "gig cancelled". The worker loses contact access at once (APP-7). */
 	public void remove(String reason, Instant now) {
 		requireActive();
 		this.status = AssignmentStatus.REMOVED;

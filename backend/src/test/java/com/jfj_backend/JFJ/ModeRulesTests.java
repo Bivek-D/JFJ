@@ -25,7 +25,7 @@ import com.jfj_backend.JFJ.security.ProviderOnly;
 import com.jfj_backend.JFJ.security.TokenService;
 import com.jfj_backend.JFJ.security.WorkerOnly;
 
-// There are no real provider/worker endpoints yet, so this test adds two tiny ones.
+// Two tiny test-only endpoints, so the mode rules are tested apart from any real feature.
 @Import({ TestcontainersConfiguration.class, ModeRulesTests.ModeTestController.class })
 @SpringBootTest
 @AutoConfigureMockMvc

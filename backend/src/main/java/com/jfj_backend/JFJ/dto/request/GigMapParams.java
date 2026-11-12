@@ -11,10 +11,6 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/**
- * Query parameters of GET /api/v1/gigs/map (MAP-2): the visible map area (from Leaflet's
- * getBounds(): south = minLat, west = minLng, north = maxLat, east = maxLng) plus the list's filters.
- */
 public record GigMapParams(
 		@NotNull @DecimalMin("-90") @DecimalMax("90") Double minLat,
 		@NotNull @DecimalMin("-180") @DecimalMax("180") Double minLng,

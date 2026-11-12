@@ -8,9 +8,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Per-user "fixed window" limit: at most `limit` calls per window (e.g. 30 per minute). Simple and
- * in memory, which is fine for one server instance. Protects the free Geoapify quota from one user
- * (or a script) burning it all.
+ * Fixed window, in memory: fine for one server instance. Protects the free Geoapify quota from one
+ * user (or a script) burning it all.
  */
 public class RateLimiter {
 
@@ -28,7 +27,6 @@ public class RateLimiter {
 		this.clock = clock;
 	}
 
-	/** true = allowed (and counted); false = over the limit for this window. */
 	public boolean tryAcquire(UUID userId) {
 		Instant now = clock.instant();
 		// compute() runs atomically per key, so two parallel requests can't both take the last slot.

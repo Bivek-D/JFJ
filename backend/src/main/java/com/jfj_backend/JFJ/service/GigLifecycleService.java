@@ -24,9 +24,8 @@ import com.jfj_backend.JFJ.repository.AssignmentRepository;
 import com.jfj_backend.JFJ.repository.GigRepository;
 
 /**
- * Start, complete, cancel (PRD 4.4 lifecycle table). Each one locks the gig row first, like hiring,
- * so a hire can't slip in halfway through a complete or cancel: they take turns.
- * Everything in one method happens in one transaction: all of it, or none of it.
+ * Each action locks the gig row first, like hiring, so a hire can't slip in halfway through a
+ * complete or cancel: they take turns.
  */
 @Service
 public class GigLifecycleService {
@@ -46,7 +45,6 @@ public class GigLifecycleService {
 		this.xpService = xpService;
 	}
 
-	/** OPEN -> IN_PROGRESS; needs at least one hired worker. Not yet: GigStartJob does this on the start date. */
 	@Transactional
 	public OwnerGigResponse start(UUID providerId, UUID gigId) {
 		Gig gig = lockOwn(providerId, gigId);
@@ -57,10 +55,6 @@ public class GigLifecycleService {
 		return OwnerGigResponse.from(gig);
 	}
 
-	/**
-	 * IN_PROGRESS -> COMPLETED (DONE-1): every ACTIVE assignment becomes COMPLETED with the same end
-	 * time, waiting applications are rejected, and completion XP is awarded. Not yet: notifications.
-	 */
 	@Transactional
 	public OwnerGigResponse complete(UUID providerId, UUID gigId) {
 		Gig gig = lockOwn(providerId, gigId);
@@ -73,7 +67,7 @@ public class GigLifecycleService {
 		active.forEach(assignment -> assignment.complete(now));
 		rejectPending(gigId);
 
-		// Completion XP in the same transaction (DONE-1, PRD 10.2): +20 per worker, +10 once for the provider.
+		// Completion XP in the same transaction: +20 per worker, +10 once for the provider.
 		// All users are locked first, in one fixed order (lockAll), to avoid deadlocks.
 		List<UUID> userIds = new java.util.ArrayList<>(active.stream().map(a -> a.getWorker().getId()).toList());
 		userIds.add(providerId);
@@ -87,10 +81,6 @@ public class GigLifecycleService {
 		return OwnerGigResponse.from(gig);
 	}
 
-	/**
-	 * OPEN or IN_PROGRESS -> CANCELLED (GIG-3): hired workers are REMOVED with reason "gig cancelled"
-	 * (no completion XP), waiting applications are rejected. Both sides may still review (B5).
-	 */
 	@Transactional
 	public OwnerGigResponse cancel(UUID providerId, UUID gigId, String reason) {
 		Gig gig = lockOwn(providerId, gigId);
@@ -101,7 +91,6 @@ public class GigLifecycleService {
 		return OwnerGigResponse.from(gig);
 	}
 
-	/** PRD "Pending applications": on CANCELLED, EXPIRED or COMPLETED, APPLIED and SHORTLISTED become REJECTED. */
 	private void rejectPending(UUID gigId) {
 		applications.findByGigIdAndStatusIn(gigId, List.of(ApplicationStatus.APPLIED, ApplicationStatus.SHORTLISTED))
 				.forEach(Application::reject);

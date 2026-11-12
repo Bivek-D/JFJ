@@ -8,10 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A small in-memory cache: entries expire after ttl, and when full the least recently used one is
- * dropped. Good enough for one server instance (Render free runs one). Saves Geoapify credits when
- * people type the same thing, and makes repeated lookups instant.
- * synchronized = one thread at a time, because LinkedHashMap is not safe for parallel use.
+ * In memory, which is enough for one server instance (Render free runs one). Saves Geoapify credits
+ * when people type the same thing. synchronized because LinkedHashMap is not safe for parallel use.
  */
 public class TtlCache<K, V> {
 
@@ -25,7 +23,6 @@ public class TtlCache<K, V> {
 	public TtlCache(int maxEntries, Duration ttl, Clock clock) {
 		this.ttl = ttl;
 		this.clock = clock;
-		// accessOrder = true + removeEldestEntry: the standard Java recipe for an LRU cache.
 		this.map = new LinkedHashMap<>(16, 0.75f, true) {
 			@Override
 			protected boolean removeEldestEntry(Map.Entry<K, Entry<V>> eldest) {

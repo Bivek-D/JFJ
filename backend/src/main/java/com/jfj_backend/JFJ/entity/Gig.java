@@ -33,9 +33,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 /**
- * One row of gigs (V4). The lifecycle and location rules live here, next to the data they protect:
- * there are no plain setters, only methods that check the rule first.
- * search_vector is not mapped: Postgres fills it, and Day 7's search reads it with native SQL.
+ * The lifecycle and location rules live here, next to the data they protect: there are no plain
+ * setters, only methods that check the rule first. search_vector is not mapped: Postgres fills it.
  */
 @Entity
 @Table(name = "gigs")
@@ -65,7 +64,6 @@ public class Gig {
 	@Column(nullable = false, length = 10)
 	private PayType payType;
 
-	// BigDecimal, never double, for money: 0.1 + 0.2 is 0.30000000000000004 in double.
 	@Column(nullable = false, precision = 10, scale = 2)
 	private BigDecimal payAmount;
 
@@ -107,7 +105,6 @@ public class Gig {
 	@Column(nullable = false, length = 12)
 	private GigStatus status = GigStatus.DRAFT;
 
-	// Lowest earned level (1-5) a worker needs to apply; null = anyone (PRD 5.7).
 	private Integer minLevel;
 
 	@Column(length = 500)
@@ -132,14 +129,13 @@ public class Gig {
 	protected Gig() {
 	}
 
-	/** A new gig starts as DRAFT (PRD 4.4); creating it sets the first location, which is not an "edit". */
+	/** Setting the first location on create is not an "edit", so it doesn't count toward the limit of 3. */
 	public Gig(User provider, Point exactLocation, RandomGenerator random) {
 		this.provider = provider;
 		this.location = exactLocation;
 		this.publicLocation = GeoUtils.approximate(exactLocation, random);
 	}
 
-	/** Everything except the location. Allowed in DRAFT, and in OPEN while nobody is hired. */
 	public void updateDetails(Category category, String title, String description, PayType payType,
 			BigDecimal payAmount, int workersNeeded, ExperienceLevel minExperience, LocalDate startDate,
 			String durationText, LocalDate applyDeadline, String addressLine, String locality, String city,
@@ -163,8 +159,8 @@ public class Gig {
 	}
 
 	/**
-	 * Move the pin (GIG-6): at most 3 times per gig. A new public point is made only when the exact
-	 * point really changes, so saving the form without moving the pin costs nothing.
+	 * At most 3 location edits per gig. A new public point is made only when the exact point really
+	 * changes, so saving the form without moving the pin costs nothing.
 	 */
 	public void moveTo(Point newExact, RandomGenerator random) {
 		requireEditable();
@@ -180,7 +176,6 @@ public class Gig {
 		this.locationEditCount++;
 	}
 
-	/** DRAFT -> OPEN. Workers can see and apply to it from now on. */
 	public void publish() {
 		if (status != GigStatus.DRAFT) {
 			throw new BadRequestException("Only a draft can be published");
@@ -188,13 +183,12 @@ public class Gig {
 		this.status = GigStatus.OPEN;
 	}
 
-	/** Separate from updateDetails so existing callers stay simple; same editing rule. */
 	public void changeMinLevel(Integer minLevel) {
 		requireEditable();
 		this.minLevel = minLevel;
 	}
 
-	/** OPEN -> IN_PROGRESS. GigService checks "at least one hired worker" (needs the assignments table). */
+	/** GigService checks "at least one hired worker" because that needs the assignments table. */
 	public void start() {
 		if (status != GigStatus.OPEN) {
 			throw new BadRequestException("Only an open gig can be started");
@@ -202,7 +196,6 @@ public class Gig {
 		this.status = GigStatus.IN_PROGRESS;
 	}
 
-	/** IN_PROGRESS -> COMPLETED (DONE-1). */
 	public void complete(Instant now) {
 		if (status != GigStatus.IN_PROGRESS) {
 			throw new BadRequestException("Only a gig in progress can be completed; start it first");
@@ -211,7 +204,6 @@ public class Gig {
 		this.completedAt = now;
 	}
 
-	/** OPEN or IN_PROGRESS -> CANCELLED, with a reason (GIG-3). Drafts are deleted instead. */
 	public void cancel(String reason) {
 		if (status != GigStatus.OPEN && status != GigStatus.IN_PROGRESS) {
 			throw new BadRequestException("Only an open or in-progress gig can be cancelled");

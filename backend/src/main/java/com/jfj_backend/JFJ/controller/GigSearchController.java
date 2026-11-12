@@ -17,11 +17,6 @@ import com.jfj_backend.JFJ.service.GigSearchService;
 
 import jakarta.validation.Valid;
 
-/**
- * Finding gigs: list and map. Any logged-in user, any mode (a provider may look around too).
- * @ParameterObject lists the record's fields as query parameters in Swagger.
- * @Valid on a query-param record: a bad value (lat=abc, radiusKm=500) -> 400 with fieldErrors.
- */
 @RestController
 @RequestMapping("/api/v1/gigs")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -33,13 +28,11 @@ public class GigSearchController {
 		this.gigSearchService = gigSearchService;
 	}
 
-	/** Open gigs: by distance when lat/lng are sent (radiusKm default 10, max 50), else newest first. */
 	@GetMapping
 	public PageResponse<GigSummaryResponse> list(@ParameterObject @Valid GigSearchParams params) {
 		return gigSearchService.list(params);
 	}
 
-	/** Pins inside the visible map area, max 200 (truncated = true when there are more). */
 	@GetMapping("/map")
 	public MapResponse map(@ParameterObject @Valid GigMapParams params) {
 		return gigSearchService.map(params);

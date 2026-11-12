@@ -16,7 +16,6 @@ import com.jfj_backend.JFJ.exception.BadRequestException;
 import com.jfj_backend.JFJ.repository.CategoryRepository;
 import com.jfj_backend.JFJ.repository.SkillRepository;
 
-/** Reference lists (skills, categories) and the checks other services use when a request names them. */
 @Service
 public class CatalogService {
 
@@ -38,7 +37,6 @@ public class CatalogService {
 		return categories.findAllByActiveTrueOrderBySortOrderAscNameAsc().stream().map(CategoryResponse::from).toList();
 	}
 
-	/** Loads the skills by id; any id that doesn't exist -> 400 naming the bad ids. */
 	@Transactional(readOnly = true)
 	public Set<Skill> requireSkills(Set<Long> skillIds) {
 		if (skillIds == null || skillIds.isEmpty()) {
@@ -53,7 +51,6 @@ public class CatalogService {
 		return new HashSet<>(found);
 	}
 
-	/** A category that exists and can still be picked for new or edited gigs. */
 	@Transactional(readOnly = true)
 	public Category requireActiveCategory(Long categoryId) {
 		return categories.findById(categoryId)

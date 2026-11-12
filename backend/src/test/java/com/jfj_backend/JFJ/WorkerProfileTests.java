@@ -113,7 +113,6 @@ class WorkerProfileTests {
 				.andExpect(jsonPath("$.profileComplete").value(true))
 				.andExpect(jsonPath("$.missing", hasSize(0)));
 
-		// Clearing the skills makes it incomplete again.
 		putJson(SKILLS, "{\"skillIds\": []}", Mode.WORKER)
 				.andExpect(jsonPath("$.profileComplete").value(false));
 	}

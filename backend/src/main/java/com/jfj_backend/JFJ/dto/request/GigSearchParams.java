@@ -12,11 +12,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
-/**
- * Query parameters of GET /api/v1/gigs (FIND-1, FIND-2). Spring fills this record from the URL
- * (?lat=..&lng=..&radiusKm=..). Everything is optional; lat and lng go together.
- * experience = the worker's own level: gigs that need that level or lower are shown.
- */
+/** experience = the worker's own level: gigs needing that level or lower are shown. */
 public record GigSearchParams(
 		@DecimalMin("-90") @DecimalMax("90") Double lat,
 		@DecimalMin("-180") @DecimalMax("180") Double lng,

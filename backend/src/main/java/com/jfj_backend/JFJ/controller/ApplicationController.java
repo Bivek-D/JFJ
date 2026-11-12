@@ -30,7 +30,6 @@ import com.jfj_backend.JFJ.service.ApplicationService;
 
 import jakarta.validation.Valid;
 
-/** Applications (PRD 5.5). Worker actions need Worker mode, provider actions Provider mode. */
 @RestController
 @RequestMapping("/api/v1")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -42,9 +41,6 @@ public class ApplicationController {
 		this.applicationService = applicationService;
 	}
 
-	// ---------- worker ----------
-
-	/** Body is optional: {"note": "..."} or nothing. */
 	@WorkerOnly
 	@PostMapping("/gigs/{gigId}/applications")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -60,7 +56,6 @@ public class ApplicationController {
 		return applicationService.listMine(userId(jwt), page, size);
 	}
 
-	/** Withdraw (APP-2). */
 	@WorkerOnly
 	@DeleteMapping("/applications/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
@@ -68,9 +63,6 @@ public class ApplicationController {
 		applicationService.withdraw(userId(jwt), id);
 	}
 
-	// ---------- provider ----------
-
-	/** ?status=APPLIED etc. to filter; ?sort=NEWEST (default), RATING or LEVEL. */
 	@ProviderOnly
 	@GetMapping("/gigs/{gigId}/applications")
 	public List<ApplicantResponse> listForGig(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID gigId,
@@ -91,7 +83,6 @@ public class ApplicationController {
 		return applicationService.reject(userId(jwt), id);
 	}
 
-	/** 400 "No openings left" when the gig is full, even when several hires arrive at the same moment. */
 	@ProviderOnly
 	@PostMapping("/applications/{id}/hire")
 	public ApplicantResponse hire(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {

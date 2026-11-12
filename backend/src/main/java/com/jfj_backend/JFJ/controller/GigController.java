@@ -31,7 +31,6 @@ import com.jfj_backend.JFJ.service.GigService;
 
 import jakarta.validation.Valid;
 
-/** Gig endpoints: provider actions (@ProviderOnly) and the gig detail page (any mode). Search: GigSearchController. */
 @RestController
 @RequestMapping("/api/v1/gigs")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -65,21 +64,18 @@ public class GigController {
 		return gigService.publish(userId(jwt), id);
 	}
 
-	/** OPEN -> IN_PROGRESS; needs at least one hired worker. */
 	@ProviderOnly
 	@PostMapping("/{id}/start")
 	public OwnerGigResponse start(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		return gigLifecycleService.start(userId(jwt), id);
 	}
 
-	/** IN_PROGRESS -> COMPLETED; hired workers' assignments complete, waiting applications are rejected. */
 	@ProviderOnly
 	@PostMapping("/{id}/complete")
 	public OwnerGigResponse complete(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		return gigLifecycleService.complete(userId(jwt), id);
 	}
 
-	/** OPEN or IN_PROGRESS -> CANCELLED with {"reason": "..."}; hired workers are removed ("gig cancelled"). */
 	@ProviderOnly
 	@PostMapping("/{id}/cancel")
 	public OwnerGigResponse cancel(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
@@ -94,16 +90,11 @@ public class GigController {
 		gigService.delete(userId(jwt), id);
 	}
 
-	/**
-	 * One gig, any mode. The address line, exact pin and provider phone are only in "exact", which is
-	 * filled for the owner and for workers hired on this gig. Others get the approximate point.
-	 */
 	@GetMapping("/{id}")
 	public GigDetailResponse detail(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		return gigService.getDetail(userId(jwt), id);
 	}
 
-	/** My gigs, newest first. ?status=DRAFT etc. to filter; page is 0-based, size max 50. */
 	@ProviderOnly
 	@GetMapping("/mine")
 	public PageResponse<OwnerGigResponse> mine(@AuthenticationPrincipal Jwt jwt,

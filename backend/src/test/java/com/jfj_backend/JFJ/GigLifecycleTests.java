@@ -87,7 +87,6 @@ class GigLifecycleTests {
 	private String waitingApplication;
 	private String assignmentId;
 
-	/** Every test starts from: OPEN gig for 2, one worker hired, one still waiting. */
 	@BeforeEach
 	void setUp() throws Exception {
 		provider = user("Meena", "meena@example.com", "9678901234");
@@ -164,13 +163,10 @@ class GigLifecycleTests {
 				.andExpect(jsonPath("$.items[0].status").value("COMPLETED"))
 				.andExpect(jsonPath("$.items[0].endedAt").isNotEmpty())
 				.andExpect(jsonPath("$.items[0].gig.status").value("COMPLETED"));
-		// The waiting applicant is told no.
 		applicationsOf(waitingWorker).andExpect(jsonPath("$.items[0].status").value("REJECTED"));
-		// The hired worker can still open the finished gig, but no longer sees the exact address.
 		as(hiredWorker, Mode.WORKER, get("/api/v1/gigs/" + gig.getId()))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.exact").doesNotExist());
-		// Others can't see a finished gig.
 		as(stranger, Mode.WORKER, get("/api/v1/gigs/" + gig.getId())).andExpect(status().isNotFound());
 	}
 
@@ -198,7 +194,6 @@ class GigLifecycleTests {
 				.andExpect(jsonPath("$.items[0].removedReason").value("gig cancelled"))
 				.andExpect(jsonPath("$.items[0].cancelReason").value("The wedding was postponed"));
 		applicationsOf(waitingWorker).andExpect(jsonPath("$.items[0].status").value("REJECTED"));
-		// Nothing can happen on a cancelled gig.
 		as(provider, Mode.PROVIDER, post("/api/v1/applications/" + waitingApplication + "/hire"))
 				.andExpect(status().isBadRequest());
 	}
@@ -217,11 +212,9 @@ class GigLifecycleTests {
 				.andExpect(jsonPath("$.phone").value("9678901234"))
 				.andExpect(jsonPath("$.phoneVerified").value(false))
 				.andExpect(jsonPath("$.availableUntil").doesNotExist());
-		// The provider sees the worker, in any mode.
 		as(provider, Mode.PROVIDER, get("/api/v1/assignments/" + assignmentId + "/contact"))
 				.andExpect(jsonPath("$.role").value("WORKER"))
 				.andExpect(jsonPath("$.phone").value("9567890123"));
-		// Not a party: looks like it doesn't exist.
 		contact(stranger).andExpect(status().isNotFound());
 		contact(waitingWorker).andExpect(status().isNotFound());
 	}

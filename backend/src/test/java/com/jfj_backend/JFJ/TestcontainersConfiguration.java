@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-// Starts a throwaway PostGIS container for tests; @ServiceConnection points Spring's datasource at it.
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
 

@@ -10,7 +10,6 @@ import org.locationtech.jts.geom.Point;
 
 import com.jfj_backend.JFJ.util.GeoUtils;
 
-// Plain unit tests: no Spring, no database.
 class GeoUtilsTests {
 
 	private final Point guwahati = GeoUtils.point(26.1445, 91.7362);
@@ -30,7 +29,6 @@ class GeoUtilsTests {
 		assertThat(GeoUtils.lng(north)).isCloseTo(91.7362, within(0.000001));
 		assertThat(GeoUtils.distanceM(guwahati, north)).isCloseTo(1000, within(0.5));
 
-		// East: longitude grows, latitude roughly stays.
 		Point east = GeoUtils.destination(guwahati, 1000, 90);
 		assertThat(GeoUtils.lng(east)).isGreaterThan(91.7362);
 		assertThat(GeoUtils.distanceM(guwahati, east)).isCloseTo(1000, within(0.5));

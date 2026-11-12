@@ -21,7 +21,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-/** One row of applications (V5). State changes go through methods that check the allowed moves. */
 @Entity
 @Table(name = "applications")
 public class Application {

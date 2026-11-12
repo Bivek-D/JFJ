@@ -11,10 +11,7 @@ import com.jfj_backend.JFJ.entity.User;
 
 import jakarta.persistence.LockModeType;
 
-/**
- * Database access for users. Spring Data writes the SQL from the method names,
- * e.g. existsByEmail -> SELECT ... WHERE email = ?. Pass email lowercase and phone as 10 digits.
- */
+/** Pass email lowercase and phone as 10 digits. */
 public interface UserRepository extends JpaRepository<User, UUID> {
 
 	Optional<User> findByEmail(String email);
@@ -23,7 +20,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
 	boolean existsByPhone(String phone);
 
-	/** Loads and locks the user row (SELECT ... FOR UPDATE) for rating and XP changes (PRD 10.2). */
+	/** Locks the user row (SELECT ... FOR UPDATE) for rating and XP changes. */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select u from User u where u.id = :id")
 	Optional<User> findByIdForUpdate(UUID id);

@@ -29,7 +29,6 @@ import com.jfj_backend.JFJ.service.LoginResult;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
-/** HTTP layer only: read the request, call the service, shape the response. No business rules here. */
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -57,7 +56,6 @@ public class AuthController {
 		return withNewCookie(authService.login(request));
 	}
 
-	/** Called on page load and after a 401. Uses only the cookie; no access token needed. */
 	@PostMapping("/refresh")
 	public ResponseEntity<TokenResponse> refresh(
 			@CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken) {
@@ -71,7 +69,6 @@ public class AuthController {
 		return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, clearedCookie().toString()).build();
 	}
 
-	/** Needs a valid access token. The cookie (if sent) lets the session remember the new mode. */
 	@PostMapping("/switch-mode")
 	@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 	public TokenResponse switchMode(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody SwitchModeRequest request,
@@ -98,7 +95,6 @@ public class AuthController {
 		return cookie(value, refreshTtl);
 	}
 
-	/** Same name and path with Max-Age=0: tells the browser to delete the cookie. */
 	private ResponseCookie clearedCookie() {
 		return cookie("", Duration.ZERO);
 	}

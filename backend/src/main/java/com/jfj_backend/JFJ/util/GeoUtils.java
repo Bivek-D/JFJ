@@ -8,8 +8,6 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 
 /**
- * Point helpers (PRD 6.3). Coordinates are WGS 84 degrees (SRID 4326), the same as GPS and Leaflet.
- *
  * Watch the order: JTS and PostGIS use x = longitude, y = latitude. Our API and Leaflet say lat first.
  * Every conversion goes through point() / lat() / lng() here, so the swap happens in one place only.
  */
@@ -51,10 +49,6 @@ public final class GeoUtils {
 		return destination(exact, distance, bearing);
 	}
 
-	/**
-	 * Where you end up after walking distanceM metres from start, heading bearingDeg (0 = north,
-	 * 90 = east). The standard "destination point" formula on a sphere.
-	 */
 	public static Point destination(Point start, double distanceM, double bearingDeg) {
 		double lat1 = Math.toRadians(lat(start));
 		double lng1 = Math.toRadians(lng(start));
@@ -68,7 +62,6 @@ public final class GeoUtils {
 		return point(Math.toDegrees(lat2), Math.toDegrees(lng2));
 	}
 
-	/** Great-circle distance in metres (haversine). Used by tests and, later, distance display. */
 	public static double distanceM(Point a, Point b) {
 		double dLat = Math.toRadians(lat(b) - lat(a));
 		double dLng = Math.toRadians(lng(b) - lng(a));

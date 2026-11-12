@@ -92,7 +92,6 @@ class GigSearchTests {
 		return categories.findAll().stream().filter(c -> c.getName().equals(name)).findFirst().orElseThrow();
 	}
 
-	/** An OPEN gig at (lat, lng). */
 	private Gig gig(String title, double lat, double lng, String category, PayType payType, String pay,
 			ExperienceLevel minExperience) {
 		Gig gig = new Gig(provider, GeoUtils.point(lat, lng), random);
@@ -112,7 +111,6 @@ class GigSearchTests {
 						Instant.now())));
 	}
 
-	/** Adds n OPEN gigs at random points inside the box, in one SQL statement (fast). */
 	private void bulkInsert(int n, double minLat, double minLng, double maxLat, double maxLng, String title) {
 		jdbc.update("""
 				INSERT INTO gigs (provider_id, category_id, title, description, pay_type, pay_amount, workers_needed,
@@ -134,7 +132,7 @@ class GigSearchTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.items[*].title", contains("Next door wedding", "Near wedding")))
 				.andExpect(jsonPath("$.totalItems").value(2))
-				// 300-500 m rounds to 0.5 km (FIND-5).
+				// 300-500 m rounds to 0.5 km.
 				.andExpect(jsonPath("$.items[0].distanceKm").value(0.5));
 
 		search("?lat=" + LAT + "&lng=" + LNG + "&radiusKm=50")
@@ -186,12 +184,10 @@ class GigSearchTests {
 				.andExpect(jsonPath("$.items[*].title", contains("Wedding helpers needed")));
 		search("?payType=HOURLY")
 				.andExpect(jsonPath("$.items[*].title", contains("Cook for a party")));
-		// An INTERMEDIATE worker sees gigs needing nothing or up to INTERMEDIATE, not EXPERIENCED.
 		search("?experience=INTERMEDIATE")
 				.andExpect(jsonPath("$.items", hasSize(2)))
 				.andExpect(jsonPath("$.items[*].title", org.hamcrest.Matchers.not(
 						org.hamcrest.Matchers.hasItem("Expert electrician"))));
-		// Stemming: "weddings" finds "Wedding".
 		search("?q=weddings").andExpect(jsonPath("$.items[*].title", contains("Wedding helpers needed")));
 		search("?startFrom=" + today.plusDays(30)).andExpect(jsonPath("$.items", hasSize(0)));
 	}
