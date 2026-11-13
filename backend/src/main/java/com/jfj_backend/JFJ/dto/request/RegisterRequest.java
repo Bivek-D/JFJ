@@ -9,11 +9,6 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/**
- * Body of POST /api/v1/auth/register (AUTH-1). @Valid on the controller runs these checks
- * before any of our code; failures become a 400 with fieldErrors.
- * Unknown fields (e.g. lat/lng, not stored until B3) are ignored.
- */
 public record RegisterRequest(
 		@NotBlank @Size(max = 100) String name,
 

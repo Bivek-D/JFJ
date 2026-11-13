@@ -23,11 +23,7 @@ import com.jfj_backend.JFJ.service.WorkerProfileService;
 
 import jakarta.validation.Valid;
 
-/**
- * Reading works in any mode (a provider can check their own worker profile too);
- * editing needs Worker mode, like every worker action (PRD 4.1).
- * "me" is always taken from the token, never from the URL, so nobody can edit someone else's profile.
- */
+/** "me" is always taken from the token, never from the URL, so nobody can edit someone else's profile. */
 @RestController
 @RequestMapping("/api/v1/workers")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)

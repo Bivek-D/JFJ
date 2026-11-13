@@ -90,7 +90,6 @@ class GigTests {
 				.orElseThrow().getId();
 	}
 
-	/** A valid gig body; overrides replace "key": value pairs in it. */
 	private String gigBody(double lat, double lng, String... overrides) {
 		LocalDate start = AgeUtils.todayInIndia().plusDays(3);
 		String body = """
@@ -163,7 +162,6 @@ class GigTests {
 
 	@Test
 	void invalidGigsAre400() throws Exception {
-		// lat and lng swapped: outside India.
 		create(gigBody(91.7362, 26.1445)).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.fieldErrors.lat").value("must be inside India"));
 		create(gigBody(26.1445, 91.7362, "payAmount", "690.345")).andExpect(status().isBadRequest())
@@ -214,7 +212,6 @@ class GigTests {
 		String id = createId();
 		String approxBefore = jdbc.queryForObject("SELECT ST_AsText(public_location) FROM gigs", String.class);
 
-		// Same pin, new title: not a location edit, approximate point untouched.
 		update(id, gigBody(26.1445, 91.7362, "title", "\"Wedding helpers\""))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.title").value("Wedding helpers"))
@@ -237,7 +234,6 @@ class GigTests {
 		User worker = users.saveAndFlush(new User("Ritu", "ritu@example.com", "9567890123", "$2a$10$hash",
 				LocalDate.of(1997, 8, 15), "4 Tea Garden Lane", "Guwahati", "Assam", "781005"));
 
-		// A draft is invisible to others (404), visible to its owner.
 		send(get(GIGS + "/" + id), worker, Mode.WORKER).andExpect(status().isNotFound());
 		send(post(GIGS + "/" + id + "/publish"), provider, Mode.PROVIDER).andExpect(status().isOk());
 
@@ -249,10 +245,8 @@ class GigTests {
 				.andExpect(jsonPath("$.mine").value(false))
 				.andExpect(jsonPath("$.exact").doesNotExist())
 				.andReturn().getResponse().getContentAsString();
-		// Not anywhere in the text: address line, provider phone, exact coordinates.
 		assertThat(body).doesNotContain("House 12", "9678901234", "26.1445", "91.7362");
 
-		// The owner gets the exact block, in any mode.
 		send(get(GIGS + "/" + id), provider, Mode.WORKER)
 				.andExpect(jsonPath("$.mine").value(true))
 				.andExpect(jsonPath("$.exact.lat").value(26.1445))

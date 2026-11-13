@@ -19,8 +19,6 @@ import com.jfj_backend.JFJ.dto.response.PageResponse;
 import com.jfj_backend.JFJ.security.WorkerOnly;
 import com.jfj_backend.JFJ.service.AssignmentService;
 
-
-/** Assignments = hires. "Mine" is the worker's job list; contact works for both sides in any mode. */
 @RestController
 @RequestMapping("/api/v1/assignments")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -39,7 +37,6 @@ public class AssignmentController {
 		return assignmentService.listMine(UUID.fromString(jwt.getSubject()), page, size);
 	}
 
-	/** The other party's name and phone, while the job is active or up to 7 days after it ended. */
 	@GetMapping("/{id}/contact")
 	public ContactResponse contact(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
 		return assignmentService.contact(UUID.fromString(jwt.getSubject()), id);

@@ -27,11 +27,6 @@ import com.jfj_backend.JFJ.repository.GigRepository;
 import com.jfj_backend.JFJ.util.AgeUtils;
 import com.jfj_backend.JFJ.util.GeoUtils;
 
-/**
- * Provider side of gigs (PRD 5.3): create as DRAFT, edit, publish, delete a draft, list my gigs.
- * The rules about state and location live in Gig itself; this class loads, checks ownership and dates,
- * and builds responses inside the transaction.
- */
 @Service
 public class GigService {
 
@@ -62,11 +57,10 @@ public class GigService {
 		return OwnerGigResponse.from(gigs.saveAndFlush(gig));
 	}
 
-	/** PUT = full replace. Moving the pin counts as a location edit (max 3). */
 	@Transactional
 	public OwnerGigResponse update(UUID providerId, UUID gigId, GigRequest request) {
 		Gig gig = getOwn(providerId, gigId);
-		// Lifecycle table: OPEN gigs are editable only until someone is hired (also locks the location, GIG-6).
+		// OPEN gigs are editable only until someone is hired (this also locks the location).
 		if (assignments.existsByGigId(gigId)) {
 			throw new BadRequestException("This gig can't be edited after a worker has been hired");
 		}
@@ -87,7 +81,6 @@ public class GigService {
 		return OwnerGigResponse.from(gig);
 	}
 
-	/** Only drafts can be deleted (PRD 4.4). A published gig is cancelled instead (B4). */
 	@Transactional
 	public void delete(UUID providerId, UUID gigId) {
 		Gig gig = getOwn(providerId, gigId);
@@ -98,10 +91,10 @@ public class GigService {
 	}
 
 	/**
-	 * GET /gigs/{id} (GIG-5). The owner sees everything, in any status. A worker with an ACTIVE assignment
-	 * sees the exact location too; a worker whose job ended still sees the gig, but not the exact location. Everyone else sees only OPEN gigs of
-	 * active providers, with the approximate point. Anything they may not see is a 404, so drafts and
-	 * suspended providers' gigs don't reveal that they exist.
+	 * The owner sees everything, in any status. A worker with an ACTIVE assignment sees the exact location
+	 * too; a worker whose job ended still sees the gig, but not the exact location. Everyone else sees only
+	 * OPEN gigs of active providers, with the approximate point. Anything they may not see is a 404, so
+	 * drafts and suspended providers' gigs don't reveal that they exist.
 	 */
 	@Transactional(readOnly = true)
 	public GigDetailResponse getDetail(UUID viewerId, UUID gigId) {
@@ -120,7 +113,6 @@ public class GigService {
 		return GigDetailResponse.from(gig, openingsLeft, mine, mine || hired, xpService.levelInfo(gig.getProvider()));
 	}
 
-	/** GET /gigs/mine, newest first, optionally one status only. */
 	@Transactional(readOnly = true)
 	public PageResponse<OwnerGigResponse> listMine(UUID providerId, GigStatus status, int page, int size) {
 		PageRequest pageRequest = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, MAX_PAGE_SIZE),
@@ -131,7 +123,6 @@ public class GigService {
 		return PageResponse.from(result, OwnerGigResponse::from);
 	}
 
-	/** 404 if the gig doesn't exist, 403 if it belongs to someone else. */
 	private Gig getOwn(UUID providerId, UUID gigId) {
 		Gig gig = gigs.findById(gigId).orElseThrow(() -> new ResourceNotFoundException("Gig not found"));
 		if (!gig.isOwnedBy(providerId)) {

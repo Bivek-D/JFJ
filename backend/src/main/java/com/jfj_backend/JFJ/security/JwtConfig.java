@@ -24,10 +24,6 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
-/**
- * Signing and checking access tokens with one shared secret (HMAC-SHA256, "HS256").
- * The same key signs tokens at login and verifies them on every request.
- */
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
 public class JwtConfig {
@@ -49,7 +45,6 @@ public class JwtConfig {
 		return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSigningKey));
 	}
 
-	/** Used by Spring Security on every request: checks signature, expiry and issuer. */
 	@Bean
 	JwtDecoder jwtDecoder(SecretKey jwtSigningKey) {
 		NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSigningKey).macAlgorithm(MacAlgorithm.HS256)
@@ -59,8 +54,8 @@ public class JwtConfig {
 	}
 
 	/**
-	 * Turns the token's claims into permissions Spring understands:
-	 * role USER -> ROLE_USER, mode WORKER -> MODE_WORKER. Day 4's mode rules check these.
+	 * Turns the token's claims into authorities: role USER -> ROLE_USER, mode WORKER -> MODE_WORKER.
+	 * @WorkerOnly and @ProviderOnly check these.
 	 */
 	@Bean
 	JwtAuthenticationConverter jwtAuthenticationConverter() {

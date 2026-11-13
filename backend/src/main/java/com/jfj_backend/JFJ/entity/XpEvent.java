@@ -16,7 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** One row of xp_events (V7). Append-only: no setters, rows are never changed or deleted. */
+/** Append-only ledger: no setters, rows are never changed or deleted. */
 @Entity
 @Table(name = "xp_events")
 public class XpEvent {

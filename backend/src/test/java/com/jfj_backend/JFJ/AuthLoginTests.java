@@ -82,18 +82,15 @@ class AuthLoginTests {
 				.andExpect(jsonPath("$.refreshToken").doesNotExist())
 				.andReturn();
 
-		// Cookie: HttpOnly, Secure, SameSite=Lax, only sent to /api/v1/auth, lives 7 days.
 		String setCookie = result.getResponse().getHeader(HttpHeaders.SET_COOKIE);
 		assertThat(setCookie).startsWith("refresh_token=")
 				.contains("HttpOnly", "Secure", "SameSite=Lax", "Path=/api/v1/auth", "Max-Age=604800");
 
-		// Only the hash is in the database, with the login mode.
 		String rawRefresh = setCookie.substring("refresh_token=".length(), setCookie.indexOf(';'));
 		RefreshToken stored = refreshTokens.findByTokenHash(TokenService.hash(rawRefresh)).orElseThrow();
 		assertThat(stored.getMode()).isEqualTo(Mode.WORKER);
 		assertThat(stored.getUser().getId()).isEqualTo(user.getId());
 
-		// Access token: signed by us, carries user id, role and mode, expires in 15 minutes.
 		String accessToken = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
 		Jwt jwt = jwtDecoder.decode(accessToken);
 		assertThat(jwt.getSubject()).isEqualTo(user.getId().toString());

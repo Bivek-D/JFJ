@@ -21,12 +21,11 @@ import com.jfj_backend.JFJ.enums.ExperienceLevel;
 import com.jfj_backend.JFJ.enums.PayType;
 
 /**
- * Worker-side gig search in plain SQL. Why not JPA here: the filters are optional (the WHERE clause is
- * built piece by piece) and the PostGIS functions are SQL anyway. Every value goes in as a :named
- * parameter, never glued into the SQL text, so input can't change the query (no SQL injection).
+ * Plain SQL rather than JPA: the filters are optional (the WHERE clause is built piece by piece) and
+ * the PostGIS functions are SQL anyway. Every value is a :named parameter, never glued into the SQL
+ * text, so input can't change the query.
  *
- * Search, radius, map and distance use public_location only (PRD 6.3). The exact point is never read here.
- * Coordinates are never logged (MAP-5).
+ * Only public_location is used here, for privacy: the exact point is never read. Coordinates are never logged.
  */
 @Repository
 public class GigSearchRepository {
@@ -50,9 +49,6 @@ public class GigSearchRepository {
 		this.jdbc = jdbc;
 	}
 
-	// ---------- list (GET /gigs) ----------
-
-	/** lat/lng/radiusM all null = no location: newest first, distance null. */
 	public List<GigSummaryResponse> searchList(GigFilters filters, Double lat, Double lng, Double radiusM,
 			LocalDate today, int limit, long offset) {
 		Query query = listQuery(filters, lat, lng, radiusM, today, limit, offset);
@@ -87,8 +83,6 @@ public class GigSearchRepository {
 		return new Query(sql, params);
 	}
 
-	// ---------- map (GET /gigs/map) ----------
-
 	public List<MapPinResponse> searchMap(GigFilters filters, double minLat, double minLng, double maxLat,
 			double maxLng, LocalDate today, int limit) {
 		Query query = mapQuery(filters, minLat, minLng, maxLat, maxLng, today, limit);
@@ -116,12 +110,9 @@ public class GigSearchRepository {
 		return new Query(sql, params);
 	}
 
-	// ---------- shared WHERE ----------
-
 	/**
-	 * Builds the WHERE clause and fills params. Only conditions for filters that were sent are added.
 	 * Always: OPEN gigs of ACTIVE providers that haven't started and are still taking applications
-	 * (this stands in for the expiry job until it exists).
+	 * (this stands in for an expiry job).
 	 */
 	private static String where(GigFilters f, Double lat, Double lng, Double radiusM, LocalDate today,
 			MapSqlParameterSource params) {
@@ -155,7 +146,6 @@ public class GigSearchRepository {
 			params.addValue("payType", f.payType().name());
 		}
 		if (f.experience() != null) {
-			// A worker at INTERMEDIATE sees gigs needing nothing, BEGINNER or INTERMEDIATE.
 			List<String> allowed = Arrays.stream(ExperienceLevel.values())
 					.filter(level -> level.ordinal() <= f.experience().ordinal())
 					.map(Enum::name).toList();
@@ -187,7 +177,7 @@ public class GigSearchRepository {
 				rs.getObject("created_at", OffsetDateTime.class).toInstant());
 	}
 
-	/** FIND-5: 1,240 m -> 1.0 km, 1,260 m -> 1.5 km. Rounding hides small differences in position. */
+	/** 1,240 m -> 1.0 km, 1,260 m -> 1.5 km. Rounding hides small differences in position. */
 	public static double roundToHalfKm(double metres) {
 		return Math.round(metres / 500.0) / 2.0;
 	}

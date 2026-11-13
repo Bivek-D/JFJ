@@ -22,7 +22,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Spring Security rejects some requests before they reach any controller, so GlobalExceptionHandler
- * never sees them. This writes those 401s and 403s in the same PRD error body as everything else.
+ * never sees them. This writes those 401s and 403s in the same error body as everything else.
  */
 @Component
 public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
@@ -35,7 +35,6 @@ public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDen
 		this.jsonMapper = jsonMapper;
 	}
 
-	/** 401: no token, or a token that is forged, malformed or expired. */
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException {
@@ -46,7 +45,6 @@ public class SecurityErrorHandler implements AuthenticationEntryPoint, AccessDen
 		write(response, request, HttpStatus.UNAUTHORIZED, message);
 	}
 
-	/** 403: valid token, but not allowed, e.g. a Provider-only action in Worker mode. */
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 			AccessDeniedException accessDeniedException) throws IOException {

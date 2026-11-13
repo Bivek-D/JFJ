@@ -104,8 +104,6 @@ class ReviewXpTests {
 		stranger = user("Arun", "arun@example.com", "9789012345");
 	}
 
-	// ---------- helpers ----------
-
 	private User user(String name, String email, String phone) {
 		return users.saveAndFlush(new User(name, email, phone, "$2a$10$hash", LocalDate.of(1990, 1, 1), "1 Road",
 				"Guwahati", "Assam", "781001"));
@@ -138,7 +136,6 @@ class ReviewXpTests {
 		return JsonPath.read(actions.andReturn().getResponse().getContentAsString(), path);
 	}
 
-	/** Apply + hire; returns the assignment id. */
 	private String hire(User w, Gig g) throws Exception {
 		String applicationId = json(as(w, Mode.WORKER, post("/api/v1/gigs/" + g.getId() + "/applications"))
 				.andExpect(status().isCreated()), "$.id");
@@ -146,7 +143,6 @@ class ReviewXpTests {
 				.andExpect(status().isOk()), "$.assignmentId");
 	}
 
-	/** A gig worked by `worker` from start to completion; returns the assignment id. */
 	private String completedJob() throws Exception {
 		Gig g = openGig(null);
 		String assignmentId = hire(worker, g);
@@ -160,7 +156,7 @@ class ReviewXpTests {
 				.contentType(MediaType.APPLICATION_JSON).content("{\"rating\": " + rating + ", \"comment\": \"ok\"}"));
 	}
 
-	/** Change rows with SQL safely inside the test transaction (see the Day 10 lesson). */
+	/** SQL changes inside the test transaction: flush Hibernate's pending writes first, clear its cache after. */
 	private void sql(String statement, Object... args) {
 		entityManager.flush();
 		jdbc.update(statement, args);
@@ -172,12 +168,10 @@ class ReviewXpTests {
 		return jdbc.queryForObject("SELECT total_xp FROM users WHERE id = ?", Integer.class, user.getId());
 	}
 
-	/** PRD 5.7 invariant: the cached total always equals the sum of the events. */
+	/** The cached total always equals the sum of the events. */
 	private void assertXpConsistent(User user) {
 		assertThat((long) totalXp(user)).isEqualTo(xpEvents.sumPoints(user.getId()));
 	}
-
-	// ---------- tests ----------
 
 	@Test
 	void levelThresholdsMatchThePrd() {
@@ -220,7 +214,6 @@ class ReviewXpTests {
 				.content("{\"skillIds\": [" + skill + "]}")).andExpect(jsonPath("$.profileComplete").value(true));
 		assertThat(totalXp(fresh)).isEqualTo(10);
 
-		// Incomplete, then complete again: no second award.
 		as(fresh, Mode.WORKER, put("/api/v1/workers/me/skills").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"skillIds\": []}"));
 		as(fresh, Mode.WORKER, put("/api/v1/workers/me/skills").contentType(MediaType.APPLICATION_JSON)
@@ -250,7 +243,6 @@ class ReviewXpTests {
 				.andExpect(jsonPath("$.providerRating.average").value(4.0))
 				.andExpect(jsonPath("$.providerRating.count").value(1))
 				.andExpect(jsonPath("$.workerRating.average").doesNotExist());
-		// The worker's public profile shows rating, level and completed gigs (WP-5).
 		as(stranger, Mode.PROVIDER, get("/api/v1/workers/" + worker.getId()))
 				.andExpect(jsonPath("$.rating.average").value(5.0))
 				.andExpect(jsonPath("$.level.name").value("Newcomer"))
@@ -272,12 +264,10 @@ class ReviewXpTests {
 				.contentType(MediaType.APPLICATION_JSON).content("{\"rating\": 6}"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.fieldErrors.rating").exists());
 
-		// Still active: too early.
 		String active = hire(worker, openGig(null));
 		review(provider, active, 5).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("You can review once the job has ended"));
 
-		// 15 days after the end: too late (DONE-5).
 		sql("UPDATE assignments SET ended_at = ? WHERE id = ?::uuid",
 				Timestamp.from(Instant.now().minus(15, ChronoUnit.DAYS)), done);
 		review(provider, done, 5).andExpect(status().isBadRequest())
@@ -302,7 +292,6 @@ class ReviewXpTests {
 				.andExpect(jsonPath("$.workerRating.average").value(2.0))
 				.andExpect(jsonPath("$.workerRating.count").value(1));
 
-		// Only the reviewer can edit; after 24 hours nobody can.
 		as(worker, Mode.WORKER, put("/api/v1/reviews/" + reviewId).contentType(MediaType.APPLICATION_JSON)
 				.content("{\"rating\": 5}")).andExpect(status().isNotFound());
 		sql("UPDATE reviews SET created_at = ? WHERE id = ?::uuid",

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import com.jfj_backend.JFJ.util.AgeUtils;
 
-// Plain unit test: no Spring, no database, runs in milliseconds.
 class AgeUtilsTests {
 
 	private final LocalDate today = LocalDate.of(2026, 11, 5);

@@ -21,9 +21,9 @@ import com.jfj_backend.JFJ.repository.UserRepository;
 import com.jfj_backend.JFJ.repository.XpEventRepository;
 
 /**
- * XP and levels (PRD 5.7). xp_events is the source of truth; users.total_xp and users.level are a cache
- * updated in the SAME transaction as the event. Callers must lock the user row first (lock / lockAll),
- * so two awards for one user can't both read the same old total.
+ * xp_events is the source of truth; users.total_xp and users.level are a cache updated in the SAME
+ * transaction as the event. Callers must lock the user row first (lock / lockAll), so two awards for
+ * one user can't both read the same old total.
  */
 @Service
 public class XpService {
@@ -35,7 +35,6 @@ public class XpService {
 	private final XpEventRepository events;
 	private final UserRepository users;
 	private final LevelConfigRepository levels;
-	// Five fixed rows, read once. (When admins can edit thresholds, this cache must be refreshed then.)
 	private volatile List<LevelConfig> levelsByMinXpDesc;
 
 	public XpService(XpEventRepository events, UserRepository users, LevelConfigRepository levels) {
@@ -44,7 +43,6 @@ public class XpService {
 		this.levels = levels;
 	}
 
-	/** XP for a star rating: 5 -> +10, 4 -> +5, 3 -> 0, 2 -> -5, 1 -> -10. */
 	public static int forRating(int rating) {
 		return switch (rating) {
 			case 5 -> 10;
@@ -56,7 +54,7 @@ public class XpService {
 		};
 	}
 
-	/** SELECT ... FOR UPDATE on one user. MANDATORY: a lock outside a transaction would end immediately. */
+	/** MANDATORY: a lock taken outside a transaction would be released immediately. */
 	@Transactional(propagation = Propagation.MANDATORY)
 	public User lock(UUID userId) {
 		return users.findByIdForUpdate(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -74,7 +72,6 @@ public class XpService {
 	}
 
 	/**
-	 * Writes one XP event and updates the cached total and level. The user must already be locked.
 	 * Idempotent: the same (user, type, ref, version) is never awarded twice (also enforced by a UNIQUE key).
 	 * Clamp: points = max(points, -total), so the total never drops below 0 and SUM(points) == total_xp.
 	 */
@@ -88,7 +85,6 @@ public class XpService {
 		lockedUser.applyXp(applied, levelFor(lockedUser.getTotalXp() + applied));
 	}
 
-	/** The highest level whose threshold the XP reaches. */
 	public int levelFor(int totalXp) {
 		return levelTable().stream().filter(l -> totalXp >= l.getMinXp()).findFirst()
 				.map(LevelConfig::getLevel).orElse(1);

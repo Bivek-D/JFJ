@@ -69,7 +69,6 @@ class GeoTests {
 		FAKE_GEOAPIFY.start();
 	}
 
-	// Point the app at the fake server, with a test key and a small rate limit.
 	@DynamicPropertySource
 	static void geoapify(DynamicPropertyRegistry registry) {
 		registry.add("geoapify.base-url", () -> "http://127.0.0.1:" + FAKE_GEOAPIFY.getAddress().getPort());

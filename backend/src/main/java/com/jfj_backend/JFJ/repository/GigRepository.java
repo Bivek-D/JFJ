@@ -25,7 +25,6 @@ public interface GigRepository extends JpaRepository<Gig, UUID> {
 	@Query("select g from Gig g where g.id = :id")
 	Optional<Gig> findByIdForUpdate(UUID id);
 
-	// GET /gigs/mine. Pageable adds LIMIT/OFFSET + ORDER BY, and Page also runs a COUNT for the total.
 	Page<Gig> findByProviderId(UUID providerId, Pageable pageable);
 
 	Page<Gig> findByProviderIdAndStatus(UUID providerId, GigStatus status, Pageable pageable);

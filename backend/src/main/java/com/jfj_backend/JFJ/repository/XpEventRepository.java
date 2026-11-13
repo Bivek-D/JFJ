@@ -12,7 +12,7 @@ public interface XpEventRepository extends JpaRepository<XpEvent, Long> {
 
 	boolean existsByUserIdAndEventTypeAndRefIdAndVersion(UUID userId, XpEventType eventType, UUID refId, int version);
 
-	/** The source of truth: tests check users.total_xp always equals this. */
+	/** Source of truth: users.total_xp must always equal this sum. */
 	@Query("select coalesce(sum(e.points), 0) from XpEvent e where e.userId = :userId")
 	long sumPoints(UUID userId);
 }

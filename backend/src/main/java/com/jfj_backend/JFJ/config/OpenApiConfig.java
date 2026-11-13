@@ -8,11 +8,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
-/**
- * Swagger / OpenAPI: the API contract for the frontend (PRD section 16).
- * springdoc reads the controllers and DTOs and builds the spec; this adds the title and the
- * "bearerAuth" scheme, so the UI's Authorize button can send "Authorization: Bearer <token>".
- */
 @Configuration
 public class OpenApiConfig {
 

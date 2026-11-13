@@ -17,8 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 /**
- * Body of POST /api/v1/gigs and PUT /api/v1/gigs/{id} (full replace). Date rules that need "today"
- * (start date not in the past, deadline not after start) are checked in GigService.
+ * Date rules that need "today" (start not in the past, deadline not after start) are checked in GigService.
  *
  * lat/lng are limited to a box around India. Besides keeping gigs local, this catches the most common
  * map bug: lat and lng swapped (Guwahati as lat 91, lng 26 lands outside the box).

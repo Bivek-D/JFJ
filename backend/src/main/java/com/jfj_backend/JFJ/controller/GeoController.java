@@ -20,10 +20,7 @@ import com.jfj_backend.JFJ.service.GeoService;
 
 import jakarta.validation.Valid;
 
-/**
- * Address search proxy (PRD 6.4). Login required (the rate limit is per user).
- * 429 = too many calls this minute; 503 = Geoapify unavailable. Either way the pin + typed address works.
- */
+/** Login required because the rate limit is per user. */
 @RestController
 @RequestMapping("/api/v1/geo")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)

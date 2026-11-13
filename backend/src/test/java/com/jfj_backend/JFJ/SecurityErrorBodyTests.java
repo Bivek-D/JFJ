@@ -24,7 +24,6 @@ import com.jfj_backend.JFJ.enums.Mode;
 import com.jfj_backend.JFJ.repository.UserRepository;
 import com.jfj_backend.JFJ.security.TokenService;
 
-// 401/403 decided by Spring Security (before any controller) must use the PRD error body too.
 @Import({ TestcontainersConfiguration.class, ModeRulesTests.ModeTestController.class })
 @SpringBootTest
 @AutoConfigureMockMvc

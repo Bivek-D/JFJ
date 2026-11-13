@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** One row of level_config (V7): level number, name, XP needed. Read-only for the app. */
 @Entity
 @Table(name = "level_config")
 public class LevelConfig {

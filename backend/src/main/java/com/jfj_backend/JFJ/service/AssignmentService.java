@@ -20,7 +20,6 @@ import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
 import com.jfj_backend.JFJ.repository.AssignmentRepository;
 import com.jfj_backend.JFJ.repository.ReviewRepository;
 
-/** A worker's jobs, and the contact reveal between the two parties of a job (APP-6, APP-7). */
 @Service
 public class AssignmentService {
 
@@ -34,7 +33,6 @@ public class AssignmentService {
 		this.reviews = reviews;
 	}
 
-	/** GET /assignments/mine: newest hire first. */
 	@Transactional(readOnly = true)
 	public PageResponse<AssignmentResponse> listMine(UUID workerId, int page, int size) {
 		PageRequest request = PageRequest.of(Math.max(page, 0), Math.clamp(size, 1, GigService.MAX_PAGE_SIZE),
@@ -50,7 +48,7 @@ public class AssignmentService {
 	}
 
 	/**
-	 * The other party's name and phone (APP-7), only for the worker or the gig's owner:
+	 * Only the worker or the gig's owner, and only:
 	 * - ACTIVE: both sides.
 	 * - COMPLETED: both sides, for 7 days after it ended.
 	 * - REMOVED: the worker loses access at once; the provider keeps it for 7 days.

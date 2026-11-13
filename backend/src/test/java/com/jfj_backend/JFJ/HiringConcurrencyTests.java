@@ -37,7 +37,6 @@ import com.jfj_backend.JFJ.util.AgeUtils;
 import com.jfj_backend.JFJ.util.GeoUtils;
 
 /**
- * The race from the design talk: many "Hire" taps at the same moment on a gig with few places.
  * NOT @Transactional: each hire must run in its own real transaction on its own thread, exactly as
  * parallel HTTP requests would. So this class commits real rows and cleans them up itself.
  */

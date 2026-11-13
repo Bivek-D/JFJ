@@ -16,7 +16,6 @@ import com.jfj_backend.JFJ.util.TtlCache;
 // Unit tests with a hand-moved clock: time is controlled, so no sleeping.
 class GeoHelpersTests {
 
-	/** A clock the test can move forward. */
 	static class MovableClock extends Clock {
 		Instant now = Instant.parse("2026-11-07T10:00:00Z");
 

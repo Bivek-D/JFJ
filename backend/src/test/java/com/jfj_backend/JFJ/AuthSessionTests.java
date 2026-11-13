@@ -52,7 +52,6 @@ class AuthSessionTests {
 	@Autowired
 	JwtDecoder jwtDecoder;
 
-	/** What a logged-in browser holds: the access token (memory) and the refresh cookie. */
 	record Session(String accessToken, String refreshToken) {
 	}
 
@@ -93,7 +92,6 @@ class AuthSessionTests {
 		assertThat(second.refreshToken()).isNotEqualTo(first.refreshToken());
 		assertThat(refreshTokens.findByTokenHash(TokenService.hash(first.refreshToken())).orElseThrow().isRevoked()).isTrue();
 
-		// The old cookie no longer works.
 		mockMvc.perform(post("/api/v1/auth/refresh").cookie(new Cookie("refresh_token", first.refreshToken())))
 				.andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.message").value("Session expired, please log in again"));
@@ -139,7 +137,6 @@ class AuthSessionTests {
 		assertThat(refreshTokens.findByTokenHash(TokenService.hash(session.refreshToken())).orElseThrow().getMode())
 				.isEqualTo(Mode.PROVIDER);
 
-		// A page reload (refresh) comes back in Provider mode.
 		Session reloaded = sessionFrom(mockMvc.perform(post("/api/v1/auth/refresh")
 				.cookie(new Cookie("refresh_token", session.refreshToken()))).andReturn());
 		assertThat(modeOf(reloaded.accessToken())).isEqualTo("PROVIDER");

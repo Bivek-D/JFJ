@@ -25,7 +25,6 @@ import com.jfj_backend.JFJ.repository.UserRepository;
 import com.jfj_backend.JFJ.security.TokenService;
 import com.jfj_backend.JFJ.util.AgeUtils;
 
-/** Account and session rules: register, login, refresh, logout, switch-mode. */
 @Service
 public class AuthService {
 
@@ -39,7 +38,6 @@ public class AuthService {
 	// Checked when the email doesn't exist, so a wrong email takes as long as a wrong password.
 	private final String dummyHash;
 
-	// Constructor injection: Spring passes in the beans; fields stay final and tests can pass their own.
 	public AuthService(UserRepository users, RefreshTokenRepository refreshTokens, PasswordEncoder passwordEncoder,
 			TokenService tokenService) {
 		this.users = users;
@@ -67,7 +65,7 @@ public class AuthService {
 				request.dateOfBirth(), request.addressLine().trim(), request.city().trim(), request.state().trim(),
 				request.pincode());
 		user.setGender(request.gender());
-		// Demo decision: no email OTP yet, so accounts count as verified at signup.
+		// No email OTP yet, so accounts count as verified at signup.
 		user.setEmailVerified(true);
 
 		try {
@@ -80,8 +78,8 @@ public class AuthService {
 	}
 
 	/**
-	 * Login lands in Worker mode (PRD 4.1). Wrong email and wrong password give the same 401,
-	 * so nobody can use login to find out which emails are registered.
+	 * Wrong email and wrong password give the same 401, so nobody can use login to find out which
+	 * emails are registered.
 	 */
 	@Transactional
 	public LoginResult login(LoginRequest request) {
@@ -100,14 +98,12 @@ public class AuthService {
 		if (!user.isEmailVerified()) {
 			throw new ForbiddenException("Please verify your email before logging in");
 		}
-		// Login lands in Worker mode (PRD 4.1).
 		return startSession(user, Mode.WORKER, Instant.now());
 	}
 
 	/**
-	 * Swap a refresh token for a new pair (rotation, AUTH-4). The old token stops working at once,
-	 * so a stolen copy is useless after the real owner's next refresh. The session keeps its mode.
-	 * Not yet: reuse detection and the grace window for simultaneous refreshes (after the demo).
+	 * Rotation: the old token stops working at once, so a stolen copy is useless after the real owner's
+	 * next refresh. The session keeps its mode.
 	 */
 	@Transactional
 	public LoginResult refresh(String rawRefreshToken) {
@@ -122,16 +118,12 @@ public class AuthService {
 		return startSession(user, current.getMode(), now);
 	}
 
-	/** End this session. Always succeeds, even with a missing or already-revoked token. */
 	@Transactional
 	public void logout(String rawRefreshToken) {
 		findUsable(rawRefreshToken, Instant.now()).ifPresent(RefreshToken::revoke);
 	}
 
-	/**
-	 * New access token in the other mode (AUTH-6). The session's refresh token remembers the mode,
-	 * so a page reload (refresh) comes back in it.
-	 */
+	/** The session's refresh token remembers the mode, so a page reload (refresh) comes back in it. */
 	@Transactional
 	public LoginResult switchMode(UUID userId, Mode mode, String rawRefreshToken) {
 		Instant now = Instant.now();
@@ -147,7 +139,6 @@ public class AuthService {
 		return new LoginResult(accessToken, tokenService.accessTtlSeconds(), mode, null);
 	}
 
-	/** New access token + new refresh token (stored as a hash) in the given mode. */
 	private LoginResult startSession(User user, Mode mode, Instant now) {
 		String accessToken = tokenService.createAccessToken(user, mode, now);
 		String refreshToken = tokenService.newRefreshToken();

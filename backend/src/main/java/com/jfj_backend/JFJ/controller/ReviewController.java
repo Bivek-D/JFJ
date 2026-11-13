@@ -28,7 +28,6 @@ import com.jfj_backend.JFJ.service.ReviewService;
 
 import jakarta.validation.Valid;
 
-/** Reviews (PRD 5.6). Either party of an ended job can review, in any mode; who rates whom comes from the job. */
 @RestController
 @RequestMapping("/api/v1")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
@@ -47,7 +46,6 @@ public class ReviewController {
 		return reviewService.create(userId(jwt), id, request.rating(), request.comment());
 	}
 
-	/** Change your own review within 24 hours. */
 	@PutMapping("/reviews/{id}")
 	public ReviewResponse edit(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id,
 			@Valid @RequestBody ReviewRequest request) {
@@ -60,7 +58,6 @@ public class ReviewController {
 		return reviewService.listFor(id, page, size);
 	}
 
-	/** Workers on my gig I haven't rated yet. */
 	@ProviderOnly
 	@GetMapping("/gigs/{id}/reviews/pending")
 	public List<PendingReviewResponse> pending(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {

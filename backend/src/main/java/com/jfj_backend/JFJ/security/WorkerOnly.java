@@ -7,7 +7,6 @@ import java.lang.annotation.Target;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
-/** Like {@link ProviderOnly}, for WORKER mode (e.g. applying to a gig). */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @PreAuthorize("hasAuthority('MODE_WORKER')")

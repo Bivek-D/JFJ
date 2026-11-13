@@ -34,7 +34,6 @@ import com.jfj_backend.JFJ.repository.GigRepository;
 import com.jfj_backend.JFJ.repository.WorkerProfileRepository;
 import com.jfj_backend.JFJ.util.AgeUtils;
 
-/** Applying and hiring (PRD 5.5). Worker side: apply, withdraw, mine. Provider side: list, shortlist, reject, hire. */
 @Service
 public class ApplicationService {
 
@@ -55,9 +54,6 @@ public class ApplicationService {
 		this.userService = userService;
 	}
 
-	// ---------- worker ----------
-
-	/** APP-1 and the lifecycle table: every rule is checked here, in the order a worker would want to hear it. */
 	@Transactional
 	public ApplicationResponse apply(UUID workerId, UUID gigId, String note) {
 		Gig gig = gigs.findById(gigId)
@@ -101,7 +97,6 @@ public class ApplicationService {
 		}
 	}
 
-	/** APP-2: only while APPLIED or SHORTLISTED. */
 	@Transactional
 	public void withdraw(UUID workerId, UUID applicationId) {
 		Application application = applications.findById(applicationId)
@@ -119,17 +114,11 @@ public class ApplicationService {
 		return PageResponse.from(result, a -> ApplicationResponse.from(a, hires.get(a.getId())));
 	}
 
-	// ---------- provider ----------
-
-	/** How the provider wants applicants ordered (APP-3). */
 	public enum ApplicantSort {
 		NEWEST, RATING, LEVEL
 	}
 
-	/**
-	 * APP-3: owner only, optionally one status. RATING = best average first (unrated last), LEVEL = highest
-	 * level first (then XP); ties stay newest first. Sorted in Java: a gig has tens of applicants, not thousands.
-	 */
+	/** Sorted in Java, not SQL: a gig has tens of applicants, not thousands. */
 	@Transactional(readOnly = true)
 	public List<ApplicantResponse> listForGig(UUID providerId, UUID gigId, ApplicationStatus status,
 			ApplicantSort sort) {
@@ -170,7 +159,7 @@ public class ApplicationService {
 	}
 
 	/**
-	 * APP-4: hire = create an assignment, but never more than workers_needed.
+	 * Never more than workers_needed hires.
 	 *
 	 * The race: two hires at the same moment would both count "0 hired" and both succeed.
 	 * The fix: lock the gig row FIRST (SELECT ... FOR UPDATE). Every hire for this gig now waits in
@@ -199,9 +188,7 @@ public class ApplicationService {
 		return toApplicant(application, assignment.getId());
 	}
 
-	// ---------- shared ----------
-
-	/** PRD: there is no FULL status; openings are always worked out from ACTIVE assignments. */
+	/** There is no FULL status; openings are always worked out from ACTIVE assignments. */
 	public int openingsLeft(Gig gig) {
 		return gig.getWorkersNeeded() - (int) assignments.countByGigIdAndStatus(gig.getId(), AssignmentStatus.ACTIVE);
 	}

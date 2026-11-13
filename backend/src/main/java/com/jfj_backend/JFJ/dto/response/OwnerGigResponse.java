@@ -13,11 +13,6 @@ import com.jfj_backend.JFJ.enums.GigStatus;
 import com.jfj_backend.JFJ.enums.PayType;
 import com.jfj_backend.JFJ.util.GeoUtils;
 
-/**
- * A gig as its owner sees it: everything, including the exact pin and address, plus the approximate
- * point so the owner can see what workers see. Only returned from provider endpoints on their own gigs.
- * The public, masked version comes on Day 8.
- */
 public record OwnerGigResponse(UUID id, String title, String description, CategoryResponse category,
 		PayType payType, BigDecimal payAmount, int workersNeeded, ExperienceLevel minExperience,
 		LocalDate startDate, String durationText, LocalDate applyDeadline, List<SkillResponse> skills,

@@ -14,10 +14,8 @@ import com.jfj_backend.JFJ.enums.PayType;
 import com.jfj_backend.JFJ.util.GeoUtils;
 
 /**
- * GET /api/v1/gigs/{id} (FIND-3, GIG-5). lat/lng are ALWAYS the approximate point.
- * exact is null unless the viewer may see it: the owner, or a worker with an ACTIVE assignment on it.
- * The frontend draws a 500 m circle when exact is null and a pin when it isn't.
- * openingsLeft = workersNeeded - ACTIVE assignments. Not yet: photos.
+ * lat/lng are always the approximate point. exact is null unless the viewer is the owner
+ * or a worker with an ACTIVE assignment on this gig.
  */
 public record GigDetailResponse(UUID id, String title, String description, CategoryResponse category,
 		PayType payType, BigDecimal payAmount, int workersNeeded, int openingsLeft, ExperienceLevel minExperience,
@@ -25,11 +23,9 @@ public record GigDetailResponse(UUID id, String title, String description, Categ
 		String locality, String city, double lat, double lng, GigStatus status, ProviderSummary provider,
 		boolean mine, ExactLocation exact, Instant createdAt, Integer minLevel) {
 
-	/** FIND-3: the provider's name, rating as a provider, and earned level. */
 	public record ProviderSummary(UUID id, String name, RatingSummary rating, LevelInfo level) {
 	}
 
-	/** Only for the owner and hired workers: exact pin, full address, provider phone. */
 	public record ExactLocation(double lat, double lng, String addressLine, String providerPhone) {
 	}
 

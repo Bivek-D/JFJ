@@ -13,10 +13,6 @@ import com.jfj_backend.JFJ.enums.AssignmentStatus;
 import com.jfj_backend.JFJ.enums.GigStatus;
 import com.jfj_backend.JFJ.enums.PayType;
 
-/**
- * An application as the WORKER sees it (GET /applications/mine, apply). Once hired, assignment
- * carries the assignment id the contact and review screens need (APP-6); otherwise it is null.
- */
 public record ApplicationResponse(UUID id, ApplicationStatus status, String note, Instant createdAt, GigBrief gig,
 		AssignmentBrief assignment) {
 

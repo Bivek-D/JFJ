@@ -6,7 +6,6 @@ import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.enums.Mode;
 import com.jfj_backend.JFJ.enums.Role;
 
-/** GET /api/v1/users/me: the logged-in user plus the mode their current token is in. */
 public record MeResponse(UUID id, String name, String email, String phone, Role role, boolean emailVerified,
 		Mode mode, RatingSummary workerRating, RatingSummary providerRating, LevelInfo level) {
 

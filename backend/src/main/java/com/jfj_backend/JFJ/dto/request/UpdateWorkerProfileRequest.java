@@ -12,11 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/**
- * Body of PUT /api/v1/workers/me/profile. PUT = send every field; anything left out is cleared.
- * photoUrl is a plain link for the demo (uploads via Cloudinary come later); https only, so pages
- * served over https don't load mixed content.
- */
+/** photoUrl must be https, so pages served over https don't load mixed content. */
 public record UpdateWorkerProfileRequest(
 		@URL(protocol = "https", message = "must be an https link") @Size(max = 500) String photoUrl,
 		@Size(max = 1000) String description,

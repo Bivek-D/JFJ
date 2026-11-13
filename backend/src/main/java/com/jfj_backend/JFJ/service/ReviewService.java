@@ -32,9 +32,9 @@ import com.jfj_backend.JFJ.repository.GigRepository;
 import com.jfj_backend.JFJ.repository.ReviewRepository;
 
 /**
- * Two-way reviews (PRD 5.6). Create and edit follow 10.2 in ONE transaction: lock the reviewee's user
- * row, update the rating sum/count, write XP, update the level. So two reviews arriving together for the
- * same person take turns and neither update is lost.
+ * Create and edit run in ONE transaction: lock the reviewee's user row, update the rating sum/count,
+ * write XP, update the level. So two reviews arriving together for the same person take turns and
+ * neither update is lost.
  */
 @Service
 public class ReviewService {
@@ -57,10 +57,7 @@ public class ReviewService {
 		this.userService = userService;
 	}
 
-	/**
-	 * DONE-2/3/4/5: on a COMPLETED or REMOVED assignment, within 14 days of its end, once per reviewer.
-	 * The direction comes from who is calling, never from the request.
-	 */
+	/** The direction comes from who is calling, never from the request. */
 	@Transactional
 	public ReviewResponse create(UUID callerId, UUID assignmentId, int rating, String comment) {
 		Assignment assignment = assignments.findById(assignmentId)
@@ -105,7 +102,7 @@ public class ReviewService {
 		return ReviewResponse.from(review, review.getCreatedAt().plus(EDIT_WINDOW));
 	}
 
-	/** DONE-4: the reviewer may change it for 24 hours. The aggregate and XP move by the difference only. */
+	/** The aggregate and XP move by the difference only. */
 	@Transactional
 	public ReviewResponse edit(UUID callerId, UUID reviewId, int rating, String comment) {
 		Review review = reviews.findById(reviewId)
@@ -126,7 +123,6 @@ public class ReviewService {
 		return ReviewResponse.from(review, editableUntil);
 	}
 
-	/** Reviews a user received, newest first. Both roles together; direction says which. */
 	@Transactional(readOnly = true)
 	public PageResponse<ReviewResponse> listFor(UUID userId, int page, int size) {
 		userService.getById(userId);
@@ -135,7 +131,6 @@ public class ReviewService {
 		return PageResponse.from(reviews.findByRevieweeId(userId, request), r -> ReviewResponse.from(r, null));
 	}
 
-	/** GET /gigs/{id}/reviews/pending: hired workers of this gig the provider can still rate. */
 	@Transactional(readOnly = true)
 	public List<PendingReviewResponse> pendingForGig(UUID providerId, UUID gigId) {
 		Gig gig = gigs.findById(gigId).orElseThrow(() -> new ResourceNotFoundException("Gig not found"));

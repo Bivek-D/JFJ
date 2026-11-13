@@ -9,10 +9,6 @@ import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.entity.WorkerProfile;
 import com.jfj_backend.JFJ.enums.ExperienceLevel;
 
-/**
- * GET/PUT /api/v1/workers/me/profile: the worker's own profile.
- * missing lists what still blocks "complete" ("photo", "skill", "language"), so the app can show a checklist.
- */
 public record WorkerProfileResponse(UUID userId, String name, String photoUrl, String description,
 		List<String> languages, int experienceYears, ExperienceLevel experienceLevel, List<SkillResponse> skills,
 		boolean profileComplete, List<String> missing) {
@@ -28,7 +24,6 @@ public record WorkerProfileResponse(UUID userId, String name, String photoUrl, S
 				missing(profile.getPhotoUrl(), skills.isEmpty(), profile.getLanguages().isEmpty()));
 	}
 
-	/** The user hasn't saved a profile yet: nothing is stored, so show an empty one. */
 	public static WorkerProfileResponse empty(User user) {
 		return new WorkerProfileResponse(user.getId(), user.getName(), null, null, List.of(), 0,
 				ExperienceLevel.BEGINNER, List.of(), false, missing(null, true, true));

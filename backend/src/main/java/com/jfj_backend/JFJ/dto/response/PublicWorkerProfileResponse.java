@@ -7,11 +7,7 @@ import java.util.UUID;
 import com.jfj_backend.JFJ.entity.WorkerProfile;
 import com.jfj_backend.JFJ.enums.ExperienceLevel;
 
-/**
- * GET /api/v1/workers/{userId}: what other users (e.g. a provider looking at applicants) may see.
- * Deliberately has no email, phone, address, pincode or date of birth. City is enough to judge distance.
- * rating = as a worker; level = earned from XP (both roles); completedGigs = COMPLETED assignments.
- */
+/** Deliberately has no email, phone, address, pincode or date of birth. City is enough to judge distance. */
 public record PublicWorkerProfileResponse(UUID userId, String name, String city, String photoUrl,
 		String description, List<String> languages, int experienceYears, ExperienceLevel experienceLevel,
 		List<SkillResponse> skills, boolean profileComplete, RatingSummary rating, LevelInfo level,

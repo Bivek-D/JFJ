@@ -25,11 +25,7 @@ import com.jfj_backend.JFJ.exception.ResourceNotFoundException;
 import com.jfj_backend.JFJ.repository.AssignmentRepository;
 import com.jfj_backend.JFJ.repository.WorkerProfileRepository;
 
-/**
- * Worker profile rules (PRD 5.2). The profile row is created the first time the worker saves something;
- * until then, reads return an empty, incomplete profile.
- * Responses are built inside the transaction, so lazy fields (user, skills) can still be loaded.
- */
+/** Responses are built inside the transaction, so lazy fields (user, skills) can still be loaded. */
 @Service
 public class WorkerProfileService {
 
@@ -73,7 +69,7 @@ public class WorkerProfileService {
 		return WorkerProfileResponse.from(profile);
 	}
 
-	/** Another user's profile. Users without a profile, or who are suspended or deleted, look the same: 404. */
+	/** Missing, suspended and deleted profiles all give the same 404, so they can't be told apart. */
 	@Transactional(readOnly = true)
 	public PublicWorkerProfileResponse getPublic(UUID userId) {
 		return profiles.findById(userId)
@@ -84,7 +80,7 @@ public class WorkerProfileService {
 	}
 
 	// Two first saves at the same moment could both try to insert; the second fails on the primary key.
-	// Rare (one person, one profile) and harmless, so it isn't handled for the demo.
+	// Rare (one person, one profile) and harmless, so it isn't handled.
 	private WorkerProfile getOrCreate(UUID userId) {
 		return profiles.findById(userId).orElseGet(() -> {
 			User user = userService.getById(userId);
@@ -92,7 +88,6 @@ public class WorkerProfileService {
 		});
 	}
 
-	/** +10 XP the first time the profile is complete (PRD 5.7). Becoming complete again later gives nothing. */
 	private void awardIfComplete(WorkerProfile profile) {
 		if (profile.isProfileComplete()) {
 			xpService.award(xpService.lock(profile.getUserId()), XpEventType.PROFILE_COMPLETE, profile.getUserId(), 0,
@@ -104,7 +99,6 @@ public class WorkerProfileService {
 		return (value == null || value.isBlank()) ? null : value.trim();
 	}
 
-	/** Trims each language and drops repeats regardless of case: ["Hindi", " hindi "] -> ["Hindi"]. */
 	private static List<String> cleanLanguages(List<String> languages) {
 		Map<String, String> byLowercase = new LinkedHashMap<>();
 		languages.stream().map(String::trim)

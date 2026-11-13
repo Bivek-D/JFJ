@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import com.jfj_backend.JFJ.entity.User;
 import com.jfj_backend.JFJ.enums.Mode;
 
-/** Creates access tokens (signed JWTs) and refresh tokens (random strings, stored only as a hash). */
 @Service
 public class TokenService {
 
@@ -31,7 +30,7 @@ public class TokenService {
 		this.properties = properties;
 	}
 
-	/** sub = user id; role and mode ride along so requests need no database lookup to know them. */
+	/** role and mode ride along in the token so requests need no database lookup to know them. */
 	public String createAccessToken(User user, Mode mode, Instant now) {
 		JwtClaimsSet claims = JwtClaimsSet.builder()
 				.issuer(JwtConfig.ISSUER)
@@ -45,14 +44,12 @@ public class TokenService {
 		return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
 	}
 
-	/** 32 random bytes (256 bits) from a secure source, URL-safe text so it fits in a cookie. */
 	public String newRefreshToken() {
 		byte[] bytes = new byte[32];
 		random.nextBytes(bytes);
 		return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
 	}
 
-	/** What we store and look up: SHA-256 of the raw token, as 64 hex characters. */
 	public static String hash(String rawToken) {
 		try {
 			byte[] digest = MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8));

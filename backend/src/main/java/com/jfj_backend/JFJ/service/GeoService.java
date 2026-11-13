@@ -30,10 +30,7 @@ import com.jfj_backend.JFJ.util.TtlCache;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Address search through Geoapify (PRD 6.4, LOC-2, LOC-3). The browser calls us, we call Geoapify,
- * so the API key never reaches the browser.
- *
- * Order per call: key configured? -> rate limit -> cache -> Geoapify (with timeouts).
+ * The browser calls us and we call Geoapify, so the API key never reaches the browser.
  * Never logged: the search text, coordinates, or Geoapify's error message (it contains the URL, key included).
  */
 @Service
@@ -63,7 +60,6 @@ public class GeoService {
 		this.cache = new TtlCache<>(2000, properties.cacheTtl(), clock);
 	}
 
-	/** Suggestions while the provider types (LOC-2). India only, English names, at most 5. */
 	public List<AddressResponse> autocomplete(UUID userId, String query) {
 		checkAllowed(userId);
 		String text = query.trim();
@@ -82,8 +78,8 @@ public class GeoService {
 	}
 
 	/**
-	 * The address at a dropped pin, to prefill the form (LOC-3). The point is rounded to 4 decimals
-	 * (~11 m): close enough for a street address, and nearby drops share one cache entry.
+	 * The point is rounded to 4 decimals (~11 m): close enough for a street address, and nearby drops
+	 * share one cache entry.
 	 */
 	public AddressResponse reverse(UUID userId, double lat, double lng) {
 		checkAllowed(userId);
@@ -127,7 +123,6 @@ public class GeoService {
 		}
 	}
 
-	/** Geoapify's default (GeoJSON) answer: {"features": [{"properties": {...}}, ...]}. */
 	static List<AddressResponse> parse(JsonNode body) {
 		List<AddressResponse> addresses = new ArrayList<>();
 		if (body == null) {

@@ -7,10 +7,7 @@ import java.lang.annotation.Target;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
-/**
- * Put on a controller method (or class): only callers whose access token is in PROVIDER mode get in.
- * Others get 403 (PRD 11.1). MODE_PROVIDER comes from the token's "mode" claim (JwtConfig).
- */
+/** MODE_PROVIDER comes from the token's "mode" claim (see JwtConfig). */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @PreAuthorize("hasAuthority('MODE_PROVIDER')")

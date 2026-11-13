@@ -143,21 +143,16 @@ class ApplicationTests {
 
 	@Test
 	void applyRulesAreEnforced() throws Exception {
-		// Provider mode can't apply.
 		as(worker, Mode.PROVIDER, post("/api/v1/gigs/" + gig.getId() + "/applications"))
 				.andExpect(status().isForbidden());
-		// Own gig.
 		completeProfile(provider, ExperienceLevel.EXPERIENCED);
 		apply(provider, gig).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("You can't apply to your own gig"));
-		// Incomplete profile.
 		User noProfile = user("New", "new@example.com", "9111111111");
 		apply(noProfile, gig).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Complete your profile")));
-		// Experience: an INTERMEDIATE worker can't apply to an EXPERIENCED-only gig.
 		apply(worker, openGig(1, ExperienceLevel.EXPERIENCED)).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("This gig needs experienced experience or more"));
-		// A draft gig doesn't exist for workers.
 		Gig draft = new Gig(provider, GeoUtils.point(26.1, 91.7), new SplittableRandom(2));
 		draft.updateDetails(categories.findAll().getFirst(), "Draft", "Draft", PayType.FIXED, BigDecimal.TEN, 1,
 				null, AgeUtils.todayInIndia().plusDays(5), "1 day", null, "a", "b", "c", Set.of());
@@ -178,7 +173,6 @@ class ApplicationTests {
 		User second = newWorker(2);
 		String other = applyAndGetId(second, gig);
 
-		// Only the owner sees applicants; no phone or email in the list.
 		as(otherProvider, Mode.PROVIDER, get("/api/v1/gigs/" + gig.getId() + "/applications"))
 				.andExpect(status().isForbidden());
 		as(provider, Mode.PROVIDER, get("/api/v1/gigs/" + gig.getId() + "/applications"))
@@ -200,7 +194,6 @@ class ApplicationTests {
 				.andExpect(jsonPath("$.status").value("HIRED"))
 				.andExpect(jsonPath("$.assignmentId").isNotEmpty());
 
-		// The worker sees the hire and its assignment id (APP-6).
 		as(worker, Mode.WORKER, get("/api/v1/applications/mine"))
 				.andExpect(jsonPath("$.items[0].status").value("HIRED"))
 				.andExpect(jsonPath("$.items[0].assignment.status").value("ACTIVE"));

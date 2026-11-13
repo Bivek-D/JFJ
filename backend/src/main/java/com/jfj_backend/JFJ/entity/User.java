@@ -19,10 +19,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/**
- * One row of the users table (V2). The location column is not mapped yet; it arrives with the map work in B3.
- * Column names come from field names: Spring Boot turns passwordHash into password_hash automatically.
- */
 @Entity
 @Table(name = "users")
 public class User {
@@ -38,11 +34,9 @@ public class User {
 	@Column(nullable = false, unique = true, length = 254)
 	private String email;
 
-	// 10 digits, no +91.
 	@Column(nullable = false, unique = true, length = 10)
 	private String phone;
 
-	// BCrypt hash, never the password itself.
 	@Column(nullable = false, length = 100)
 	private String passwordHash;
 
@@ -64,7 +58,6 @@ public class User {
 	@Column(nullable = false, length = 6)
 	private String pincode;
 
-	// STRING stores the name ("USER"), not the position (0), so reordering the enum can't corrupt data.
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 10)
 	private Role role = Role.USER;
@@ -107,7 +100,6 @@ public class User {
 	@Column(nullable = false)
 	private Instant updatedAt;
 
-	/** Required by JPA, which creates the object first and fills the fields after. Not for our code. */
 	protected User() {
 	}
 
@@ -220,7 +212,6 @@ public class User {
 		return phoneVerified;
 	}
 
-	/** A new or edited rating as a worker: sumDelta = new - old (or the rating), countDelta = 1 or 0. */
 	public void addWorkerRating(int sumDelta, int countDelta) {
 		this.ratingSum += sumDelta;
 		this.ratingCount += countDelta;

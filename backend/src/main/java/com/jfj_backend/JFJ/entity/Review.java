@@ -20,7 +20,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-/** One row of reviews (V7). The 24-hour edit rule is checked in ReviewService. */
 @Entity
 @Table(name = "reviews")
 public class Review {

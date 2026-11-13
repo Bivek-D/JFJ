@@ -17,7 +17,6 @@ import com.jfj_backend.JFJ.exception.BadRequestException;
 import com.jfj_backend.JFJ.repository.GigSearchRepository;
 import com.jfj_backend.JFJ.util.AgeUtils;
 
-/** Worker discovery (PRD 5.4, 6.2): the gig list and the map. Checks the combinations, then asks the repository. */
 @Service
 public class GigSearchService {
 
@@ -31,10 +30,6 @@ public class GigSearchService {
 		this.repository = repository;
 	}
 
-	/**
-	 * Sorted by distance when lat/lng are sent, else newest first (FIND-1).
-	 * Not yet: falling back to the user's saved location (users.location is not filled by any endpoint yet).
-	 */
 	@Transactional(readOnly = true)
 	public PageResponse<GigSummaryResponse> list(GigSearchParams params) {
 		if ((params.lat() == null) != (params.lng() == null)) {
@@ -56,7 +51,7 @@ public class GigSearchService {
 		return new PageResponse<>(items, page, size, total, (int) Math.ceil(total / (double) size));
 	}
 
-	/** MAP-2: at most 200 pins. Ask for 201: if 201 come back, there are more, so truncated = true. */
+	/** Ask for 201: if 201 come back there are more than 200, so truncated = true. */
 	@Transactional(readOnly = true)
 	public MapResponse map(GigMapParams params) {
 		if (params.minLat() >= params.maxLat() || params.minLng() >= params.maxLng()) {

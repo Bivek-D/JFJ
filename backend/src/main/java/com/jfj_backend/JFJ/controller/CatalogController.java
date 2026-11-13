@@ -10,7 +10,6 @@ import com.jfj_backend.JFJ.dto.response.CategoryResponse;
 import com.jfj_backend.JFJ.dto.response.SkillResponse;
 import com.jfj_backend.JFJ.service.CatalogService;
 
-/** Public reference lists: signup, profile, gig forms and filters need them, some before login. */
 @RestController
 @RequestMapping("/api/v1")
 public class CatalogController {
@@ -26,7 +25,6 @@ public class CatalogController {
 		return catalogService.listSkills();
 	}
 
-	/** Active categories, in display order ("Other" last). */
 	@GetMapping("/categories")
 	public List<CategoryResponse> categories() {
 		return catalogService.listCategories();

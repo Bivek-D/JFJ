@@ -10,11 +10,7 @@ import com.jfj_backend.JFJ.entity.WorkerProfile;
 import com.jfj_backend.JFJ.enums.ApplicationStatus;
 import com.jfj_backend.JFJ.enums.ExperienceLevel;
 
-/**
- * An application as the PROVIDER sees it (APP-3): the note plus what the worker's public profile shows.
- * No phone, email or address here; the phone is revealed only after hiring (contact reveal, Day 10).
- * rating = as a worker; level = earned level. Not yet: work proofs.
- */
+/** No phone, email or address: the phone is revealed only after hiring. */
 public record ApplicantResponse(UUID id, ApplicationStatus status, String note, Instant createdAt,
 		ApplicantWorker worker, UUID assignmentId) {
 
