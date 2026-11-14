@@ -11,7 +11,7 @@ This repository is a monorepo:
 
 | | |
 |---|---|
-| API base URL | https://jfj-s529.onrender.com/api/v1 |
+| Frontend | https://jfj-roan.vercel.app/ |
 | OpenAPI / Swagger UI | https://jfj-s529.onrender.com/swagger-ui.html |
 | Health | https://jfj-s529.onrender.com/actuator/health |
 
