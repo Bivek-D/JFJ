@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://jfj-s529.onrender.com/api/:path*" },
+    { "source": "/actuator/:path*", "destination": "https://jfj-s529.onrender.com/actuator/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
