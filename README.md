@@ -353,4 +353,4 @@ frontend/                          # in progress
 - Notifications
 - Admin endpoints (account suspension, category and level management)
 - Photo upload (`photo_url` column exists, no storage)
-- Frontend
+Built by Bivek Daimary
