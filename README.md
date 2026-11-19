@@ -15,7 +15,7 @@ This repository is a monorepo:
 | OpenAPI / Swagger UI | https://jfj-s529.onrender.com/swagger-ui.html |
 | Health | https://jfj-s529.onrender.com/actuator/health |
 
-The API runs on Render's free tier, so the first request after an idle period can take up to a minute.
+The API runs on Render's free tier, which sleeps after 15 minutes idle. An external monitor pings /actuator/health every 10 minutes to keep it warm (and the Supabase DB active). If the monitor lapses, the first request can take up to a minute.
 
 ---
 
